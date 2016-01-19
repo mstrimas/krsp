@@ -1,0 +1,9 @@
+Package: krsp
+Title: What the Package Does (one line, title case)
+Version: 0.0.0.9000
+Authors@R: "Matthew Strimas-Mackey <mstrimas@gmail.com> [aut,cre]"
+Description: What the package does (one paragraph).
+Depends: R (>= 3.2.3)
+License: MIT + file LICENSE
+LazyData: true
+Imports: dplyr
