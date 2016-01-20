@@ -1,7 +1,7 @@
 #' Connect to the krsp database
 #'
 #' \code{krsp_connect} is a wrapper for \code{\link[dplyr]{src_mysql}} that
-#' connects to the krsp database. By default, this function will connect to a
+#' connects to the KRSP database. By default, this function will connect to a
 #' local copy of the database. The host, username, and password must be supplied
 #' if a remote database is to be used.
 #'
@@ -14,13 +14,15 @@
 #'    supplied.
 #' @param ... Additional arguments passed on to \code{\link[dplyr]{src_mysql}}.
 #'
-#' @return
+#' @return A character vector of table names
 #' @export
-#'
 #' @examples
-#' db <- krsp_connect()
+#' con <- krsp_connect()
+#' krsp_tables(con)
 krsp_connect <- function(dbname = "krsp", host = "localhost", port = 0L,
                          user = "root", password = "", ...) {
-  dplyr::src_mysql(dbname = dbname, host = host, port = port, user = user,
-                   password = password, ...)
+  con <- dplyr::src_mysql(dbname = dbname, host = host, port = port,
+                          user = user, password = password, ...)
+  class(con) <- c("krsp", class(con))
+  con
 }

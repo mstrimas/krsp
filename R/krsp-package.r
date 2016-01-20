@@ -1,8 +1,9 @@
 #' krsp: Working with the Kluane Red Squirrel Project Database
 #'
-#' This package is designed to help user bring data from the krsp database into
+#' This package is designed to help users bring data from the KRSP database into
 #' R. In addition, common database queries are standardized as R functions to
-#' ensure consistency. The vignette demonstrates the use of this package:
+#' ensure consistency. Many of the functions are wrappers around \code{dplyr} or
+#' \code{RMySQL} functions. The vignette demonstrates the use of this package:
 #' \code{browseVignettes(package = "krsp")}
 #'
 #' @name krsp
