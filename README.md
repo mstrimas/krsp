@@ -6,7 +6,7 @@ Installation
 
 ``` r
 install.packages("devtools")
-devtools::install_github("mstrimas/foofactors", build_vignettes = TRUE)
+devtools::install_github("mstrimas/krsp", build_vignettes = TRUE)
 ```
 
 Use
