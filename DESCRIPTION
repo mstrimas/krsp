@@ -1,9 +1,17 @@
 Package: krsp
-Title: What the Package Does (one line, title case)
+Title: Working with the Kluane Red Squirrel Project Database
 Version: 0.0.0.9000
 Authors@R: "Matthew Strimas-Mackey <mstrimas@gmail.com> [aut,cre]"
-Description: What the package does (one paragraph).
-Depends: R (>= 3.2.3)
+Description: This package is designed to help user bring data from the KRSP
+    database into R. In addition, common database queries are standardized as R
+    functions to ensure consistency.
+Depends: 
+    R (>= 3.1.2),
+    dplyr
 License: MIT + file LICENSE
 LazyData: true
-Imports: dplyr
+RoxygenNote: 5.0.1
+Imports: RMySQL,
+    assertthat
+URL: https://github.com/mstrimas/krsp
+BugReports: https://github.com/mstrimas/krsp/issues
