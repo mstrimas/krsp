@@ -8,7 +8,7 @@
 #'
 #' @name krsp
 #' @docType package
-#' @importFrom dplyr %>%
+#' @import dplyr
 NULL
 
 # R CMD check doesn't like %>%, this fix deals with that

@@ -5,7 +5,7 @@ Authors@R: "Matthew Strimas-Mackey <mstrimas@gmail.com> [aut,cre]"
 Description: This package is designed to help user bring data from the KRSP
     database into R. In addition, common database queries are standardized as R
     functions to ensure consistency.
-Depends: 
+Depends:
     R (>= 3.1.2),
     dplyr
 License: MIT + file LICENSE
@@ -15,3 +15,6 @@ Imports: RMySQL,
     assertthat
 URL: https://github.com/mstrimas/krsp
 BugReports: https://github.com/mstrimas/krsp/issues
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

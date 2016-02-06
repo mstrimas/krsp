@@ -1,0 +1,240 @@
+---
+title: "MySQL in the Cloud with AWS"
+author: "Matt Strimas-Mackey"
+date: "`r Sys.Date()`"
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{MySQL in the Cloud with AWS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+[Amazon Web Services](http://aws.amazon.com) (AWS) is a platform that offers a bewildering array of cloud computing services. Their flagship product is [Elastic Compute Cloud](https://aws.amazon.com/ec2/) (EC2) which gives users the ability to quickly deploy virtual computers (called instances) in the cloud. The specifications (number of cores, RAM, and storage) of an instance can be tailored to the size and complexity of the task, and users pay an hourly rate that depends on the computing power of the instance. 
+
+The diversity and flexibility of AWS makes it extremely powerful; however, it also makes simple tasks daunting and confusing. This document will focus on a single, well-defined goal: setting up MySQL Server on an AWS EC2 instance and migrating an existing database to the cloud. The only prerequisite is an AWS account, which you can [sign up for](http://aws.amazon.com) if you haven't already. A credit card is required to sign up, but you will only be charged for computing time you use, and Amazon offers an excellent [free tier](https://aws.amazon.com/free/) that is suitable for small databases.
+
+# Deploying an EC2 instance
+
+Log in to the [AWS Console](console.aws.amazon.com) and click on the EC2 icon under *Compute*. Now select the region appropriate for your location from the drop down on the top right. I've selected Oregon since I live in Vancouver.
+
+<img src="img/region-dropdown.png" style="display: block; margin: auto;" />
+
+## Creating a security group
+
+AWS [security groups](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html) act as virtual firewalls that control remote access to instances. They determine the range of IP addresses that can connect to an instance and what services (e.g. SSH or HTTP) will be available for that instance. We want to access the instance via SSH and connect to MySQL Server. So, select *Security Group* from the left panel, then click the *Create Security Group* button, give it a name, and add two rules:
+
+1. Type: **SSH**; Source: **Anywhere**
+2. Type: **MYSQL/Aurora**; Source: **Anywhere**
+
+<img src="img/security-group.png" style="display: block; margin: auto;" />
+
+Note that I've opened this instance to connections from any IP address. If you're concerned about security, you can change *Source* to only allow connections from certain IP ranges.
+
+## Creating a SSH key pair
+
+Instead of a password, Amazon EC2 instances require a [key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html?console_help=true) to log into them remotely. This key pair consists of a public key, which stays on AWS, and a private key that you keep on your local machine. When you SSH into the EC2 instance from your local machine, your private key will "unlock" the public key on the instance allowing you access.
+
+To create a key pair from the EC2 dashboard, select *Key Pairs* from the left panel, then click the *Create Key Pair* button. Enter a name for your key pair, then click *Create*.
+
+<img src="img/key-pair.png" style="display: block; margin: auto;" />
+
+Your browser will not download a file with a `.pem` extension. This is your private key and should be stored in a secure location. **Important: If you loose your private key you won't be able to access your EC2 instance; if someone else gets ahold of your private key they will be able to gain access to your instance. Be careful with it!**
+
+## Launching the instance
+
+To launch an EC2 instance, select *Instance* on the left panel, then click the *Launch Instance* button. You'll now be presented with a list of **Amazon Machine Images (AMIs)**. These define the base operating system and software upon which you'll build your instance. Click the *Select* button next to **Ubuntu** to launch an instance based on the Ubuntu Linux distribution.
+
+<img src="img/ubuntu.png" style="display: block; margin: auto;" />
+
+Now you'll be prompted to select an instance type, this specifies the characteristics (and price) of the virtual machine you'll be creating. The sky's the limit here, you could create a machine with 40 cores and 160 GB of RAM, but we'll stick with the default Free Tier (*t2.micro*) here. This a very basic machine that is good for simple tasks and small databases. And, most importantly, it doesn't cost a penny! Select the *Free Tier*, then click the *Review and Launch* button.
+
+<img src="img/instance-type.png" style="display: block; margin: auto;" />
+
+On the next page, you're asked to configure the instance. Leave the top portion as is, but scroll down to the *Advanced* section and click on it to expend it. You'll now see a text box titled *User Data*, which allows you to enter a shell script that will be run as the instance is created. By entering commands here to install desired software you can reduce the amount of configuration you'll have to do after the instance is created.
+
+<img src="img/shell-script.png" style="display: block; margin: auto;" />
+
+The following code installs **MySQL Server** and the **AWS Command-line Utilities**, paste it into the text box then click the *Add Storage* button. This could also be done interactively *after* the instance is already deployed; however, I like to encode as much of the setup as possible into a script since it allows me to quickly start up new instances with the same configuration.
+
+```bash
+#!/bin/bash
+apt-get update -y
+
+# Install MySQL, set root password to "root"
+debconf-set-selections <<< 'mysql-server mysql-server/root_password password root'
+debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password root'
+apt-get -y install mysql-server-5.6
+
+# Install AWS Command Line Utilities
+apt-get install -y awscli
+```
+
+On the next page, you'll be asked to specify the amount of storage you want; 10GiB should be sufficient. Click the *Tag Instance* button to go to the next page where you will give your instance a name (e.g. krsp). Then click the *Configure Security Group* button.
+
+Now select the SSH and MySQL security group you created earlier to make your instance accessible remotely.
+
+<img src="img/sg-select.png" style="display: block; margin: auto;" />
+
+Next click the *Review and Launch* button, then the *Launch* button on the next page to launch the instance. Finally, before the instance launches, you'll be prompted to select a key pair. Choose the key pair you created earlier.
+
+<img src="img/kp-select.png" style="display: block; margin: auto;" />
+
+AWS will now boot up your instance. Return to the *Instances* page on the *EC2 Console* for a list of running instances. The EC2 instance you just created should be listed here. Clicking on the instance will bring up further information, including the **Public DNS of your instance**, which you'll need in the next step.
+
+<img src="img/instance-ip.png" style="display: block; margin: auto;" />
+
+# Configuring the EC2 instance
+
+Now that your instance is up and running, it's time to configure it to your needs. In particular, you'll need to configure MySQL Server to allow remote access.
+
+## Connecting to the EC2 instance
+
+The configuration process will require remotely logging in to the instance with SSH. Open a terminal window and enter the following command, making sure to substitute in the correct path to the private key (i.e. `.pem` file) on your local machine and the public DNS of your instance, which is available via the *Instances* page in the *EC2 Console*.
+
+```bash
+ssh -i ~/aws.pem ubuntu@ec2-52-35-107-41.us-west-2.compute.amazonaws.com
+```
+
+If this doesn't work and you get an error that looks something like this:
+
+```
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0640 for 'aws.pem' are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.
+Load key "aws.pem": bad permissions
+Permission denied (publickey).
+```
+
+You need to change the permissions for your private key so other users can't access it. To do this run the following command, making sure to use the correct path to your `.pem` file.
+
+```bash
+chmod 400 ~/aws.pem
+```
+
+Then run the above `ssh` command. Note in the `ssh` command that you've connected to the instance as user `ubuntu`. This is the default SSH user on Ubuntu-based EC2 instances. The user `ubuntu` has passwordless `sudo` ability (i.e. can run commands as a super user without the need to enter a password); however, `ubuntu` must login in the using a key pair. This is the best practice for security recommended by Amazon.
+
+## Improve MySQL security
+
+In the process of deploying this EC2 instance, we provided a script that installed MySQL with a dummy `root` user password "root". In the interest of security, you should run `mysql_secure_installation`, which will prompt you to change your password and make a variety of security improvements to default MySQL installation. Run the following while logged into the instance via SSH. When prompted for your current root password, enter "root", then answer provide a new (and better) root password and answer yes to all prompts.
+
+```bash
+sudo mysql_secure_installation
+```
+
+## Load a sample database
+
+To test that MySQL Server is working and provide an example database to work with, we'll install the simple [Sakila sample database](https://dev.mysql.com/doc/sakila/en/). First download this database:
+
+```bash
+cd ~
+wget http://downloads.mysql.com/docs/sakila-db.tar.gz
+tar -xvzf sakila-db.tar.gz
+```
+
+Now, connect to MySQL with the following command, entering your password as required.
+
+```bash
+mysql -u root -p
+```
+
+Then load the Sakila database into MySQL with:
+
+```sql
+SOURCE ~/sakila-db/sakila-schema.sql;
+SOURCE ~/sakila-db/sakila-data.sql;
+```
+
+## Managing MySQL users and permissions
+
+MySQL Server controls access through a list of users, each with a specified host (i.e. host name or IP address) and set of permissions. A given user can only access the database from the specified host For example, if a user's host is set to `localhost`, then they will be unable to connect remotely. Conversely, if their host is set to `example.com` then will be unable to connect locally (i.e. from the command line while logged in via SSH) or from any host other than `example.com`. Furthermore, each user is given permissions for what they are allowed to do. For example, some users may only be able to `SELECT` from tables while others may be able to `MODIFY` or `DELETE`; the root user can do anything.
+
+While logged into MySQL Server at the root user, the commands for creating a new user and granting permissions is:
+
+```sql
+CREATE USER newuser@'localhost' IDENTIFIED BY 'password';
+GRANT SELECT ON sakila.* TO newuser@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Let's break this down:
+
+- The first statement creates a new user with username `newuser` and password `password`. 
+- In the first statement, the `@'localhost'` piece specifies that the user can only connect while logged on to the instance via SSH. `localhost` can be replaced with any host (e.g. `192.168.1.1` or `www.example.com`). In addition, the `%` symbol can be used as a wildcard, for example `%.example.com` allows connections from any host on the `example.com` domain. To allow a user to connect from anywhere, use `newuser@'%'`; however, note that there are security risks associated with opening up access from any host.
+- The second statement grants `SELECT` privileges to `newuser@'localhost'`. To grant other privileges list them seperated by commas (e.g. `SELECT, INSERT`). Refer to the [MySQL documentation](http://dev.mysql.com/doc/refman/5.7/en/grant.html) for a full list of privileges, but the most common are:
+    - `ALL PRIVILEGES` all privileges, except `GRANT OPTION`
+    - `CREATE` user can create new tables
+    - `DROP` user can delete tables and databases
+    - `DELETE` user can delete rows from tables
+    - `INSERT` user can add new rows to tables
+    - `SELECT` user can read data from tables
+    - `GRANT OPTION` user can grant priviliges to other users
+- In the second statement, `sakila.*` specifies that the privileges granted apply to all tables within the sakila schema. This allows different priviliges to apply to different sets of tables. A specific table can be referenced with `sakila.film`; to grant privileges on all tables use `*.*`.
+
+To list all existing users, run the following query:
+
+```sql
+SELECT user, host FROM mysql.user ORDER BY user, host;
+```
+
+To change an existing password for the currently logged in user, run
+
+```sql
+SET PASSWORD = PASSWORD('newpassword');
+```
+
+and to change the password for any user (e.g. `matt@'%.example.com'`), run the following while logged in as `root`
+
+```sql
+SET PASSWORD FOR matt@'%.example.com' = PASSWORD('newpassword);
+```
+
+### Allowing remote connections to MySQL
+
+By default, remote access to MySQL Server is disabled for security reasons. To enable remote access you'll need to change the MySQL configuration file `/etc/mysql/my.cnf`. Log on to the instances via ssh, then run the following command to open the file for editing:
+
+```bash
+sudo nano /etc/mysql/my.cnf
+```
+
+Now, scroll down until you see the line `bind-address = 127.0.0.1` and comment it out by placing a `#` at the start of the line. Now save the changes (`Ctrl-O`) and exit (`Ctrl-X`). Finally, restart MySQL with
+
+```bash
+sudo /etc/init.d/mysql restart
+```
+
+### Best practices for the KRSP database
+
+Working under the assumption that the KRSP database does not contain highly sensitive data and that access should almost always be read only, I suggest the following best practices for setting up users and permissions for remote access:
+
+1. Each user of the database should have their own username and password; no sharing of login credentials. Where possible, use the a person's 2-3 letter observer code as their username (e.g. `abc`).
+2. All users requiring remote access should only be granted `SELECT` privileges on all tables and, for simplicity, should be allowed access via any host.
+3. Accounts should be created with a temporary password that will immediately expire. The new user should be instructed to login as soon as possible and will need to change their password to something more secure with `SET PASSWORD = PASSWORD('newpassword');`.
+4. As people leave the project their access should be revoked using `DROP USER abc@'%';`.
+
+With these rules in mind, setting up a new user would proceed as follows:
+
+```sql
+CREATE USER abc@'%' IDENTIFIED BY 'temppassword';
+GRANT SELECT ON krsp.* TO abc@'%';
+ALTER USER abc@'%' PASSWORD EXPIRE;
+FLUSH PRIVILEGES;
+```
+
+Here the third line ensures the new user will have to change their password immediately. This will require logging in from the command line, which is covered below.
+
+In addition to these remote users, the KRSP database will require some administrators who can manage other users and make changes to the tables, for example add new data at the end of a field season. This should be a very small subset of people and administrator privileges should only be allowed when connected from `localhost`, this ensures that the user must connect via SSH using their key pair first, which provides much better security.
+
+To add user `abc` as an administrator, run the following queries either at `root` or another administrator:
+
+```sql
+CREATE USER abc@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES, GRANT OPTION ON *.* TO abc@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Note that username `abc` has been used both for the remote user and for the local administrator. MySQL Server will distinguish them based on their host, so that administrator privileges will only be allowed when `abc` logs on via `localhost` after SSHing into the DB2 instance.
+
+## Connecting to MySQL in the cloud

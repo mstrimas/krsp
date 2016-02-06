@@ -13,5 +13,5 @@ krsp_tables <- function(con) {
 
 #' @export
 krsp_tables.krsp <- function(con) {
-  dplyr::src_tbls(con)
+  src_tbls(con)
 }

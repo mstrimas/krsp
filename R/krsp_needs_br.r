@@ -35,9 +35,9 @@ krsp_needs_br.krsp <- function(con, year = current_year()) {
   inner_join(litter, squirrel, by = c("squirrel_id" = "id")) %>%
     arrange(gr, trap_date) %>%
     select(gr,
-           id,
-           colorlft, colorrt,
-           taglft, tagrt,
-           locx, locy,
-           trap_date)
+                  id,
+                  colorlft, colorrt,
+                  taglft, tagrt,
+                  locx, locy,
+                  trap_date)
 }

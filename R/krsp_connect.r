@@ -21,7 +21,7 @@
 #' krsp_tables(con)
 krsp_connect <- function(dbname = "krsp", host = "localhost", port = 0L,
                          user = "root", password = "", ...) {
-  con <- dplyr::src_mysql(dbname = dbname, host = host, port = port,
+  con <- src_mysql(dbname = dbname, host = host, port = port,
                           user = user, password = password, ...)
   class(con) <- c("krsp", class(con))
   con
