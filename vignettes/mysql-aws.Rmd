@@ -9,147 +9,79 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-[Amazon Web Services](http://aws.amazon.com) (AWS) is a platform that offers a bewildering array of cloud computing services. Their flagship product is [Elastic Compute Cloud](https://aws.amazon.com/ec2/) (EC2) which gives users the ability to quickly deploy virtual computers (called instances) in the cloud. The specifications (number of cores, RAM, and storage) of an instance can be tailored to the size and complexity of the task, and users pay an hourly rate that depends on the computing power of the instance. 
+[Amazon Web Services](http://aws.amazon.com) (AWS) is a platform that offers a bewildering array of cloud computing services. Among their many products is the [Relational Database Service](https://aws.amazon.com/rds/) (RDS) which gives users the ability to quickly deploy virtual computers (called instances) to house databases in the cloud. The specifications (number of cores, RAM, and storage) of an instance can be tailored to the size of the database and number of users, and AWS charges an [hourly rate](https://aws.amazon.com/rds/pricing/) that depends on the computing power of the instance. 
 
-The diversity and flexibility of AWS makes it extremely powerful; however, it also makes simple tasks daunting and confusing. This document will focus on a single, well-defined goal: setting up MySQL Server on an AWS EC2 instance and migrating an existing database to the cloud. The only prerequisite is an AWS account, which you can [sign up for](http://aws.amazon.com) if you haven't already. A credit card is required to sign up, but you will only be charged for computing time you use, and Amazon offers an excellent [free tier](https://aws.amazon.com/free/) that is suitable for small databases.
+The diversity and flexibility of AWS makes it extremely powerful; however, it also makes simple tasks daunting and confusing. This document will focus on a single, well-defined goal: setting up MySQL Server on an AWS RDS instance and migrating an existing database to the cloud. The only prerequisite is an AWS account, which you can [sign up for](http://aws.amazon.com) if you haven't already. A credit card is required to sign up, but you will only be charged for computing time you use, and Amazon offers an excellent [free tier](https://aws.amazon.com/free/) that is suitable for small databases.
 
-# Deploying an EC2 instance
+# Deploying an RDS Instance
 
-Log in to the [AWS Console](console.aws.amazon.com) and click on the EC2 icon under *Compute*. Now select the region appropriate for your location from the drop down on the top right. I've selected Oregon since I live in Vancouver.
-
-<img src="img/region-dropdown.png" style="display: block; margin: auto;" />
+Log in to the [AWS Console](console.aws.amazon.com) and select the region appropriate for your location from the drop down on the top right.
 
 ## Creating a security group
 
-AWS [security groups](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html) act as virtual firewalls that control remote access to instances. They determine the range of IP addresses that can connect to an instance and what services (e.g. SSH or HTTP) will be available for that instance. We want to access the instance via SSH and connect to MySQL Server. So, select *Security Group* from the left panel, then click the *Create Security Group* button, give it a name, and add two rules:
+AWS [security groups](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html) act as virtual firewalls that control remote access to instances. They determine the range of IP addresses that can connect to an instance and what services (e.g. SSH or MySQL Server) will be available for that instance. An RDS instance should only provide access to MySQL Server.
 
-1. Type: **SSH**; Source: **Anywhere**
-2. Type: **MYSQL/Aurora**; Source: **Anywhere**
+To set this up, from the AWS Console, click on the EC2 icon under *Compute*.
+
+<img src="img/ec2-icon.png" style="display: block; margin: auto;" />
+
+Then select *Security Group* from the left panel and click the *Create Security Group* button, give the new security group a name (e.g. `rds`), and add the rule: 
+
+- Type: **MYSQL/Aurora**; Source: **Anywhere**
 
 <img src="img/security-group.png" style="display: block; margin: auto;" />
 
-Note that I've opened this instance to connections from any IP address. If you're concerned about security, you can change *Source* to only allow connections from certain IP ranges.
-
-## Creating a SSH key pair
-
-Instead of a password, Amazon EC2 instances require a [key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html?console_help=true) to log into them remotely. This key pair consists of a public key, which stays on AWS, and a private key that you keep on your local machine. When you SSH into the EC2 instance from your local machine, your private key will "unlock" the public key on the instance allowing you access.
-
-To create a key pair from the EC2 dashboard, select *Key Pairs* from the left panel, then click the *Create Key Pair* button. Enter a name for your key pair, then click *Create*.
-
-<img src="img/key-pair.png" style="display: block; margin: auto;" />
-
-Your browser will not download a file with a `.pem` extension. This is your private key and should be stored in a secure location. **Important: If you loose your private key you won't be able to access your EC2 instance; if someone else gets ahold of your private key they will be able to gain access to your instance. Be careful with it!**
+Note that I've opened this instance to connections from any IP address. If security was a major concern we could create rules with specific IP addresses for each user; however, this significantly increase the work required to configure and manage the database.
 
 ## Launching the instance
 
-To launch an EC2 instance, select *Instance* on the left panel, then click the *Launch Instance* button. You'll now be presented with a list of **Amazon Machine Images (AMIs)**. These define the base operating system and software upon which you'll build your instance. Click the *Select* button next to **Ubuntu** to launch an instance based on the Ubuntu Linux distribution.
+To launch an RDS instance, return to the main AWS Console and click on the RDS icon under *Database*.
 
-<img src="img/ubuntu.png" style="display: block; margin: auto;" />
+<img src="img/rds-icon.png" style="display: block; margin: auto;" />
 
-Now you'll be prompted to select an instance type, this specifies the characteristics (and price) of the virtual machine you'll be creating. The sky's the limit here, you could create a machine with 40 cores and 160 GB of RAM, but we'll stick with the default Free Tier (*t2.micro*) here. This a very basic machine that is good for simple tasks and small databases. And, most importantly, it doesn't cost a penny! Select the *Free Tier*, then click the *Review and Launch* button.
+Next select *Instances* on the left panel, then click the *Launch DB Instance* button. You'll now proceed through 4 pages of settings for setting on the instance.
 
-<img src="img/instance-type.png" style="display: block; margin: auto;" />
+### Step 1: Select Engine
 
-On the next page, you're asked to configure the instance. Leave the top portion as is, but scroll down to the *Advanced* section and click on it to expend it. You'll now see a text box titled *User Data*, which allows you to enter a shell script that will be run as the instance is created. By entering commands here to install desired software you can reduce the amount of configuration you'll have to do after the instance is created.
+First you'll need to choose a database engine to work with. To launch a MySQL instance, click the MySQL tab, then click the *Select* button.
 
-<img src="img/shell-script.png" style="display: block; margin: auto;" />
+<img src="img/mysql.png" style="display: block; margin: auto;" />
 
-The following code installs **MySQL Server** and the **AWS Command-line Utilities**, paste it into the text box then click the *Add Storage* button. This could also be done interactively *after* the instance is already deployed; however, I like to encode as much of the setup as possible into a script since it allows me to quickly start up new instances with the same configuration.
+### Step 2: Production?
 
-```bash
-#!/bin/bash
-apt-get update -y
+This step asks whether you want create a production or test database. Production databases have higher performance, but also higher cost. Since the KRSP database is small, with few users, a test database *should* meet the performance requirements. Therefore, I suggest initially using a test database and only switching to a production database if performance becomes an issue.
 
-# Install MySQL, set root password to "root"
-debconf-set-selections <<< 'mysql-server mysql-server/root_password password root'
-debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password root'
-apt-get -y install mysql-server-5.6
+<img src="img/production.png" style="display: block; margin: auto;" />
 
-# Install AWS Command Line Utilities
-apt-get install -y awscli
-```
+### Step 3: Specify DB Details
 
-On the next page, you'll be asked to specify the amount of storage you want; 10GiB should be sufficient. Click the *Tag Instance* button to go to the next page where you will give your instance a name (e.g. krsp). Then click the *Configure Security Group* button.
+On this page you'll enter specific details for the RDS instance you're creating. In the *DB Engine Version* dropdown select the most current version of MySQL Server (5.7.10 at the moment). The *DB Instance Class* specifies the RAM and cores you want for the instance. The first choice in the dropdown (`db.t2.micro`) is the free tier and should be suitable for the KRSP database. Again, this can be changed to a more expensive tier if performance is an issue. Select No for *Multi-AZ Deployement* and 5GB of storage.
 
-Now select the SSH and MySQL security group you created earlier to make your instance accessible remotely.
+<img src="img/specs.png" style="display: block; margin: auto;" />
 
-<img src="img/sg-select.png" style="display: block; margin: auto;" />
+In the lower section of this page you should set the name of the instance to `krsp` and pick a username and password for the master user. This is the user that will have full permissions over the database and will create other users as needed. Therefore it's important to choose a secure password, and I suggest picking a generic username (e.g. `root`) rather than one specific to a person (e.g. `matt`).
 
-Next click the *Review and Launch* button, then the *Launch* button on the next page to launch the instance. Finally, before the instance launches, you'll be prompted to select a key pair. Choose the key pair you created earlier.
+<img src="img/master-user.png" style="display: block; margin: auto;" />
 
-<img src="img/kp-select.png" style="display: block; margin: auto;" />
+### Step 4: Configure Advanced Settings
 
-AWS will now boot up your instance. Return to the *Instances* page on the *EC2 Console* for a list of running instances. The EC2 instance you just created should be listed here. Clicking on the instance will bring up further information, including the **Public DNS of your instance**, which you'll need in the next step.
+Here you'll configure the advanced settings, most which can be left as the defaults. To enable remote access to the instance, you will need to set the *VPC Security Group* to the security group you created at the start of this tutorial. In the *Database Name* field enter `krsp` to instruct AWS to create a blank database with this name when the instance is created.
 
-<img src="img/instance-ip.png" style="display: block; margin: auto;" />
+<img src="img/sg-choose.png" style="display: block; margin: auto;" />
 
-# Configuring the EC2 instance
+Finally, RDS will automatically backup the database according to a user-defined schedule. Since the KRSP database is mostly static, backups are of minimal importance. Set this field to 0 to disable backups or, to be a bit more careful, choose a large number such as 30 days.
 
-Now that your instance is up and running, it's time to configure it to your needs. In particular, you'll need to configure MySQL Server to allow remote access.
+<img src="img/backup.png" style="display: block; margin: auto;" />
 
-## Connecting to the EC2 instance
+## Instance address
 
-The configuration process will require remotely logging in to the instance with SSH. Open a terminal window and enter the following command, making sure to substitute in the correct path to the private key (i.e. `.pem` file) on your local machine and the public DNS of your instance, which is available via the *Instances* page in the *EC2 Console*.
+Now that you've created an instance you'll need the address so you can connect remotely. Return to the *RDS Dashboard* and click *Instances* in the left panel. Then click on instane you just created. *Endpoint* should be a URL ending in `rds.amazonaws.com`, this is the address that you'll use to connect to the remote MySQL database you've just created.
 
-```bash
-ssh -i ~/aws.pem ubuntu@ec2-52-35-107-41.us-west-2.compute.amazonaws.com
-```
+<img src="img/ip.png" style="display: block; margin: auto;" />
 
-If this doesn't work and you get an error that looks something like this:
+# Managing MySQL Users and Permissions
 
-```
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-Permissions 0640 for 'aws.pem' are too open.
-It is required that your private key files are NOT accessible by others.
-This private key will be ignored.
-Load key "aws.pem": bad permissions
-Permission denied (publickey).
-```
-
-You need to change the permissions for your private key so other users can't access it. To do this run the following command, making sure to use the correct path to your `.pem` file.
-
-```bash
-chmod 400 ~/aws.pem
-```
-
-Then run the above `ssh` command. Note in the `ssh` command that you've connected to the instance as user `ubuntu`. This is the default SSH user on Ubuntu-based EC2 instances. The user `ubuntu` has passwordless `sudo` ability (i.e. can run commands as a super user without the need to enter a password); however, `ubuntu` must login in the using a key pair. This is the best practice for security recommended by Amazon.
-
-## Improve MySQL security
-
-In the process of deploying this EC2 instance, we provided a script that installed MySQL with a dummy `root` user password "root". In the interest of security, you should run `mysql_secure_installation`, which will prompt you to change your password and make a variety of security improvements to default MySQL installation. Run the following while logged into the instance via SSH. When prompted for your current root password, enter "root", then answer provide a new (and better) root password and answer yes to all prompts.
-
-```bash
-sudo mysql_secure_installation
-```
-
-## Load a sample database
-
-To test that MySQL Server is working and provide an example database to work with, we'll install the simple [Sakila sample database](https://dev.mysql.com/doc/sakila/en/). First download this database:
-
-```bash
-cd ~
-wget http://downloads.mysql.com/docs/sakila-db.tar.gz
-tar -xvzf sakila-db.tar.gz
-```
-
-Now, connect to MySQL with the following command, entering your password as required.
-
-```bash
-mysql -u root -p
-```
-
-Then load the Sakila database into MySQL with:
-
-```sql
-SOURCE ~/sakila-db/sakila-schema.sql;
-SOURCE ~/sakila-db/sakila-data.sql;
-```
-
-## Managing MySQL users and permissions
-
-MySQL Server controls access through a list of users, each with a specified host (i.e. host name or IP address) and set of permissions. A given user can only access the database from the specified host For example, if a user's host is set to `localhost`, then they will be unable to connect remotely. Conversely, if their host is set to `example.com` then will be unable to connect locally (i.e. from the command line while logged in via SSH) or from any host other than `example.com`. Furthermore, each user is given permissions for what they are allowed to do. For example, some users may only be able to `SELECT` from tables while others may be able to `MODIFY` or `DELETE`; the root user can do anything.
+MySQL Server controls access through a list of users, each with a specified host (i.e. host name or IP address) and set of permissions. A given user can only access the database from the specified host For example, if a user's host is set to `localhost`, then they will be unable to connect remotely. Conversely, if their host is set to `example.com` then will be unable to connect from any host other than `example.com`. Furthermore, each user is given permissions for what they are allowed to do. For example, some users may only be able to `SELECT` from tables while others may be able to `MODIFY` or `DELETE`. The master user (`root` in this tutorial) specfied when creating the instance can connect from any location and has all permissions.
 
 While logged into MySQL Server at the root user, the commands for creating a new user and granting permissions is:
 
@@ -237,4 +169,74 @@ FLUSH PRIVILEGES;
 
 Note that username `abc` has been used both for the remote user and for the local administrator. MySQL Server will distinguish them based on their host, so that administrator privileges will only be allowed when `abc` logs on via `localhost` after SSHing into the DB2 instance.
 
+
+
+
+
+# Configuring the EC2 instance
+
+Now that your instance is up and running, it's time to configure it to your needs. In particular, you'll need to configure MySQL Server to allow remote access.
+
+## Connecting to the EC2 instance
+
+The configuration process will require remotely logging in to the instance with SSH. Open a terminal window and enter the following command, making sure to substitute in the correct path to the private key (i.e. `.pem` file) on your local machine and the public DNS of your instance, which is available via the *Instances* page in the *EC2 Console*.
+
+```bash
+ssh -i ~/aws.pem ubuntu@ec2-52-35-107-41.us-west-2.compute.amazonaws.com
+```
+
+If this doesn't work and you get an error that looks something like this:
+
+```
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0640 for 'aws.pem' are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.
+Load key "aws.pem": bad permissions
+Permission denied (publickey).
+```
+
+You need to change the permissions for your private key so other users can't access it. To do this run the following command, making sure to use the correct path to your `.pem` file.
+
+```bash
+chmod 400 ~/aws.pem
+```
+
+Then run the above `ssh` command. Note in the `ssh` command that you've connected to the instance as user `ubuntu`. This is the default SSH user on Ubuntu-based EC2 instances. The user `ubuntu` has passwordless `sudo` ability (i.e. can run commands as a super user without the need to enter a password); however, `ubuntu` must login in the using a key pair. This is the best practice for security recommended by Amazon.
+
+## Improve MySQL security
+
+In the process of deploying this EC2 instance, we provided a script that installed MySQL with a dummy `root` user password "root". In the interest of security, you should run `mysql_secure_installation`, which will prompt you to change your password and make a variety of security improvements to default MySQL installation. Run the following while logged into the instance via SSH. When prompted for your current root password, enter "root", then answer provide a new (and better) root password and answer yes to all prompts.
+
+```bash
+sudo mysql_secure_installation
+```
+
+## Load a sample database
+
+To test that MySQL Server is working and provide an example database to work with, we'll install the simple [Sakila sample database](https://dev.mysql.com/doc/sakila/en/). First download this database:
+
+```bash
+cd ~
+wget http://downloads.mysql.com/docs/sakila-db.tar.gz
+tar -xvzf sakila-db.tar.gz
+```
+
+Now, connect to MySQL with the following command, entering your password as required.
+
+```bash
+mysql -u root -p
+```
+
+Then load the Sakila database into MySQL with:
+
+```sql
+SOURCE ~/sakila-db/sakila-schema.sql;
+SOURCE ~/sakila-db/sakila-data.sql;
+```
+
+
 ## Connecting to MySQL in the cloud
+
