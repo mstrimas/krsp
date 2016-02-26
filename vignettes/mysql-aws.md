@@ -1,7 +1,7 @@
 ---
 title: "MySQL in the Cloud with AWS"
 author: "Matt Strimas-Mackey"
-date: "`r Sys.Date()`"
+date: "2016-02-25"
 output: html_document
 vignette: >
   %\VignetteIndexEntry{MySQL in the Cloud with AWS}
