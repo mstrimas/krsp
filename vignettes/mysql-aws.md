@@ -1,7 +1,7 @@
 ---
 title: "MySQL in the Cloud with AWS"
 author: "Matt Strimas-Mackey"
-date: "2016-02-25"
+date: "2016-02-28"
 output: html_document
 vignette: >
   %\VignetteIndexEntry{MySQL in the Cloud with AWS}
@@ -89,7 +89,7 @@ Several users of the KRSP database use [Navicat](http://www.navicat.com/) as a G
 
 <img src="img/navicat-connect.png" style="display: block; margin: auto;" />
 
-After you've entered all the necessary information click the *Test* button to ensure everything is working. If the test works, click *OK*, then double click on the connection name (`krsp-aws`) to connect.
+After you've entered all the necessary information click *OK*, then double click on the connection name (`krsp-aws`) to connect.
 
 ## MySQL Workbench
 
@@ -97,7 +97,7 @@ After you've entered all the necessary information click the *Test* button to en
 
 <img src="img/workbench-connect.png" style="display: block; margin: auto;" />
 
-After you've entered all the necessary information click the *Test Connection* button to ensure everything is working. You'll need to enter your password. If the test works, click *Close*, then click on the connection name (`krsp-aws`) to connect.
+After you've entered all the necessary information click *Close*, then click on the connection name (`krsp-aws`) to connect.
 
 ## R
 

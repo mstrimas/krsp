@@ -15,5 +15,5 @@ Use
 For a full demonstation of the functions in this package consult the vignette.
 
 ``` r
-browseVignettes('krsp')
+browseVignettes("krsp")
 ```

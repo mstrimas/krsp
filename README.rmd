@@ -28,5 +28,5 @@ devtools::install_github("mstrimas/krsp")
 For a full demonstation of the functions in this package consult the vignette.
 
 ```{r vignette, eval=F}
-browseVignettes('krsp')
+browseVignettes("krsp")
 ```
