@@ -1,7 +1,7 @@
 ---
 title: "MySQL in the Cloud with AWS"
 author: "Matt Strimas-Mackey"
-date: "2016-02-28"
+date: "2016-03-09"
 output: html_document
 vignette: >
   %\VignetteIndexEntry{MySQL in the Cloud with AWS}
@@ -101,7 +101,74 @@ After you've entered all the necessary information click *Close*, then click on 
 
 ## R
 
-Coming soon.
+MySQL databases can be access in R using a variety of approaches: the `RMySQL` package, the `src_mysql` function in `dplyr`, or `krsp_connect` function in the custom `krsp` package. In all cases, you need to create a `my.cnf` connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.
+
+On Mac OS and Linux the connection file is `~/.my.cnf` and on Windows it is located at `C:/my.cnf`. Open this file, or create it if it doesn't already exist, and enter the following text:
+
+```
+[krsp-aws]
+username=msm
+password=F60RUsyiG579PeKdCH
+host=krsp.abc123.us-west-2.rds.amazonaws.com
+port=3306
+database=datasets
+```
+
+Make sure you edit this to include your own username and password, and the correct host, which is the Public DNS of the AWS instance or the IP address of a remote computer. Mutliple connection profiles can be set up with different names, here I've used `krsp-aws` for the name of this profile.
+
+To reduce the risk of someone getting access to your database credentials, it's wise to set the permissions of the `.my.cnf` file so only you can read it. In the terminal, navigate to the home directory and enter the following command:
+
+```bash
+sudo chmod 600 .my.cnf
+```
+Note that this doesn't apply to Windows.
+
+To create a connection object with `RMySQL`, run the following code in R:
+
+
+```r
+db <-  dbConnect(MySQL(), group = "krsp-aws")
+```
+
+```
+## Error in eval(expr, envir, enclos): could not find function "dbConnect"
+```
+
+```r
+dbListTables(db)
+```
+
+```
+## Error in eval(expr, envir, enclos): could not find function "dbListTables"
+```
+
+To connect using `src_mysql`, note that supplying `NULL` to the three listing arguements is critical:
+
+
+```r
+db <- src_mysql(group = "krsp-aws", dbname = NULL, password = NULL, user = NULL)
+src_tbls(db)
+```
+
+```
+## [1] "FLastAll"       "behaviour"      "census"         "female_year"   
+## [5] "juvenile"       "litter"         "squirrel"       "squirrel_alias"
+## [9] "trapping"
+```
+
+ Finally, with `krsp_connect` there is no need to use `NULL` arguments.
+ 
+
+```r
+db <- krsp_connect(group = "krsp-aws")
+krsp_tables(db)
+```
+
+```
+## [1] "FLastAll"       "behaviour"      "census"         "female_year"   
+## [5] "juvenile"       "litter"         "squirrel"       "squirrel_alias"
+## [9] "trapping"
+```
 
 # Managing MySQL Users and Privileges
 

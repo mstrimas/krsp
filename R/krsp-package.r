@@ -3,7 +3,7 @@
 #' This package is designed to help users bring data from the KRSP database into
 #' R. In addition, common database queries are standardized as R functions to
 #' ensure consistency. Many of the functions are wrappers around \code{dplyr} or
-#' \code{RMySQL} functions. The vignette demonstrates the use of this package:
+#' \code{RMySQL} functions. The vignettes demonstrates the use of this package:
 #' \code{browseVignettes(package = "krsp")}
 #'
 #' @name krsp

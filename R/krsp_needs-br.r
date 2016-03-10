@@ -8,8 +8,8 @@
 #' @param con Connection to KRSP database
 #' @param year integer; vector of years to search within. Defaults to current year.
 #'
-#' @return A data.frame of squirrels, including their IDs and identifying
-#'    information
+#' @return A tbl of squirrels, including their IDs and identifying
+#'    information. Can be converted to a data.frame.
 #' @export
 #' @examples
 #' con <- krsp_connect()
@@ -20,7 +20,7 @@ krsp_needs_br <- function(con, year) {
 
 #' @export
 krsp_needs_br.krsp <- function(con, year = current_year()) {
-  # assertion
+  # assertions
   assertthat::assert_that(is_integer(year),
                          all(year >= 1984),
                          all(year <= current_year()))
@@ -35,9 +35,9 @@ krsp_needs_br.krsp <- function(con, year = current_year()) {
   inner_join(litter, squirrel, by = c("squirrel_id" = "id")) %>%
     arrange(gr, trap_date) %>%
     select(gr,
-                  id,
-                  colorlft, colorrt,
-                  taglft, tagrt,
-                  locx, locy,
-                  trap_date)
+           id,
+           colorlft, colorrt,
+           taglft, tagrt,
+           locx, locy,
+           trap_date)
 }

@@ -20,9 +20,14 @@
 #' con <- krsp_connect()
 #' krsp_tables(con)
 krsp_connect <- function(dbname = "krsp", host = "localhost", port = 0L,
-                         user = "root", password = "", ...) {
-  con <- src_mysql(dbname = dbname, host = host, port = port,
-                          user = user, password = password, ...)
+                         user = "root", password = "", group = NULL, ...) {
+  if (is.null(group)) {
+    con <- src_mysql(dbname = dbname, host = host, port = port,
+                     user = user, password = password, ...)
+  } else {
+    con <- src_mysql(group = group, dbname = NULL, host = NULL, password = NULL,
+                     user = NULL, ...)
+  }
   class(con) <- c("krsp", class(con))
   con
 }
