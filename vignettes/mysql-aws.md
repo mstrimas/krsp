@@ -9,6 +9,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
+
 [Amazon Web Services](http://aws.amazon.com) (AWS) is a platform that offers a bewildering array of cloud computing services. Among their many products is the [Relational Database Service](https://aws.amazon.com/rds/) (RDS) which gives users the ability to quickly deploy virtual computers (called instances) to house databases in the cloud. The specifications (number of cores, RAM, and storage) of an instance can be tailored to the size of the database and number of users, and AWS charges an [hourly rate](https://aws.amazon.com/rds/pricing/) that depends on the computing power of the instance. 
 
 The diversity and flexibility of AWS makes it extremely powerful; however, it also makes simple tasks daunting and confusing. This document will focus on a single, well-defined goal: setting up MySQL Server on an AWS RDS instance and migrating an existing database to the cloud. The only prerequisite is an AWS account, which you can [sign up for](http://aws.amazon.com) if you haven't already. A credit card is required to sign up, but you will only be charged for computing time you use, and Amazon offers an excellent [free tier](https://aws.amazon.com/free/) that is suitable for small databases.
@@ -128,18 +130,13 @@ To create a connection object with `RMySQL`, run the following code in R:
 
 ```r
 db <-  dbConnect(MySQL(), group = "krsp-aws")
-```
-
-```
-## Error in eval(expr, envir, enclos): could not find function "dbConnect"
-```
-
-```r
 dbListTables(db)
 ```
 
 ```
-## Error in eval(expr, envir, enclos): could not find function "dbListTables"
+## [1] "FLastAll"       "behaviour"      "census"         "female_year"   
+## [5] "juvenile"       "litter"         "squirrel"       "squirrel_alias"
+## [9] "trapping"
 ```
 
 To connect using `src_mysql`, note that supplying `NULL` to the three listing arguements is critical:
