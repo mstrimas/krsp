@@ -10,7 +10,7 @@
 
 <meta name="author" content="Matt Strimas-Mackey" />
 
-<meta name="date" content="2016-03-10" />
+<meta name="date" content="2016-03-11" />
 
 <title>MySQL in the Cloud with AWS</title>
 
@@ -64,10 +64,11 @@ img {
 <div id="header">
 <h1 class="title">MySQL in the Cloud with AWS</h1>
 <h4 class="author"><em>Matt Strimas-Mackey</em></h4>
-<h4 class="date"><em>2016-03-10</em></h4>
+<h4 class="date"><em>2016-03-11</em></h4>
 </div>
 
 
+<pre><code>## Loading required package: DBI</code></pre>
 <p><a href="http://aws.amazon.com">Amazon Web Services</a> (AWS) is a platform that offers a bewildering array of cloud computing services. Among their many products is the <a href="https://aws.amazon.com/rds/">Relational Database Service</a> (RDS) which gives users the ability to quickly deploy virtual computers (called instances) to house databases in the cloud. The specifications (number of cores, RAM, and storage) of an instance can be tailored to the size of the database and number of users, and AWS charges an <a href="https://aws.amazon.com/rds/pricing/">hourly rate</a> that depends on the computing power of the instance.</p>
 <p>The diversity and flexibility of AWS makes it extremely powerful; however, it also makes simple tasks daunting and confusing. This document will focus on a single, well-defined goal: setting up MySQL Server on an AWS RDS instance and migrating an existing database to the cloud. The only prerequisite is an AWS account, which you can <a href="http://aws.amazon.com">sign up for</a> if you haven’t already. A credit card is required to sign up, but you will only be charged for computing time you use, and Amazon offers an excellent <a href="https://aws.amazon.com/free/">free tier</a> that is suitable for small databases.</p>
 <div id="deploying-an-rds-instance" class="section level1">

@@ -69,7 +69,7 @@ krsp_locmap.krsp <- function(con, grid, year = current_year()) {
   }
   fnt <- c("Helvetica Neue", "sans-serif")
   x_ticks <- floor(min(results$x)):ceiling(max(results$x))
-  y_ticks <- seq(floor(min(results$y)), ceiling(max(results$y)), by = 2)
+  y_ticks <- floor(min(results$y)):ceiling(max(results$y))
   # letter labels for x-axis
   x_labels <- data_frame(x = x_ticks + ifelse(reverse_grid, 0.2, -0.2),
                          y = ceiling(max(results$y)),
@@ -78,8 +78,10 @@ krsp_locmap.krsp <- function(con, grid, year = current_year()) {
                          })
                          )
   g <- ggvis::ggvis(results, ~x, ~y) %>%
-    ggvis::layer_points(key := ~id, fill = ~factor(squirrel_id),
-                        shape = ~sex) %>%
+    ggvis::layer_points(fill = ~factor(squirrel_id), shape = ~sex,
+                        key := ~id, opacity := 0.7) %>%
+    # assign shapes to sexes
+    scale_nominal("shape", range = c("circle", "square")) %>%
     # labels for x loc letters
     ggvis::layer_text(~x, ~y, text := ~label,
                       fontSize := 14, fontWeight := "bold",
@@ -120,6 +122,6 @@ krsp_locmap.krsp <- function(con, grid, year = current_year()) {
                )) %>%
     # popup tooltips with additional information
     ggvis::add_tooltip(popup) %>%
-    ggvis::set_options(height = 600, width = 1000)
+    ggvis::set_options(height = 650, width = 900)
   return(g)
 }
