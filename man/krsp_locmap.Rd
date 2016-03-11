@@ -14,8 +14,7 @@ krsp_locmap(con, grid, year)
 \item{year}{integer; defaults to current year}
 }
 \value{
-Displays and returns a \code{ggvis} plot mapping locations of
-   behaviours on grid.
+Displays and returns a \code{ggvis} plot of rattle locations.
 }
 \description{
 Create an interative plot of rattle or feeding behaviour on given grid and in

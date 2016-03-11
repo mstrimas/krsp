@@ -10,8 +10,7 @@
 #' @param grid character; a single grid to map
 #' @param year integer; defaults to current year
 #'
-#' @return Displays and returns a \code{ggvis} plot mapping locations of
-#'    behaviours on grid.
+#' @return Displays and returns a \code{ggvis} plot of rattle locations.
 #' @export
 #' @examples
 #' con <- krsp_connect()
