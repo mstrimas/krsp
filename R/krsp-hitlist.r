@@ -27,15 +27,17 @@ krsp_hitlist.krsp <- function(con, year = current_year()) {
                           all(year >= 1984),
                           all(year <= current_year()))
 
+  year <- as.integer(year)
   aug_start <- paste0(year - 1, "-08-01")
   aug_end <- paste0(year - 1, "-08-31")
 
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
+    # get necessary tables from database
     census <- tbl(con, "census") %>%
       filter(sex == "F",
-             census_date >= '2015-08-01',
-             census_date <= '2015-08-31') %>%
+             census_date >= aug_start,
+             census_date <= aug_end) %>%
       select(squirrel_id, gr, taglft, tagrt, reflo, locx, locy)
     litter <- tbl(con, "litter") %>%
       filter(yr == (year - 1), ln == 1, br != 0) %>%

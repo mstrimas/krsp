@@ -1,0 +1,90 @@
+---
+title: "Working with the KRSP database in R"
+author: "Matt Strimas-Mackey"
+date: "`r Sys.Date()`"
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{Working with the KRSP database in R}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r options, include=F}
+knitr::opts_chunk$set(warning = FALSE)
+options(knitr.table.format = 'markdown')
+```
+
+The `krsp` package offers a set of tools for working with the KRSP MySQL database in R. 
+Functions fall into two categories: standard database queries and helper functions for writing custom queries. The former require very little knowledge of R or the database to run. For writing your own queries, this package takes a SQL-free approach, instead using the `dplyr` MySQL interface. Therefore, if you're not already familiar with `dplyr`, it will be useful to read through one of the many [tutorials online](http://seananderson.ca/2014/09/13/dplyr-intro.html) or look through the vignette with `vignette("introduction", "dplyr")`. I provide an extremely brief introduction below.
+
+# `dplyr` basics
+
+`dplyr` is a package designed for manipulating data in data frames quickly and easily. The functions in this package are more consistent, intuitive, and predictable than the equivalent base R functions. There are five core **verbs** (aka functions) for working with single data frames:
+
+- `select()`: select a subset of columns in a data frame.
+- `filter()`: select a subset of rows in a data frame.
+- `arrange()`: sort the rows in a data frame by the values in a column.
+- `mutate()`: add new columns to a data frame that are functions of existing columns.
+- `summarise()`: collapse a data frame and summarize data.
+
+Here's a brief demonstration of how these verbs work.
+
+```{r st-verbs}
+#install.packages("dplyr")
+library(dplyr)
+mtc <- tbl_df(mtcars)
+mtc <- select(mtc, mpg, cyl, horse_power = hp)
+mtc
+filter(mtc, cyl == 4, horse_power < 70)
+arrange(mtc, desc(cyl), horse_power)
+mutate(mtc, mpg_per_hp = mpg / horse_power)
+summarize(mtc, mean_mpg = mean(mpg), num_records = n())
+```
+
+Note that in all cases the first arguement is a data frame, the subsequent arguements describe what you want to do with the data frame, and the result is always another data frame. Also, columns in the data frame are referenced directly without quotes.
+
+## Chaining operations with `%>%`
+
+The pipe operator, `%>%`, is used to chain multiple operations together in a way that avoids multiple, nested function calls. It can be used with any R functions, but it is particularly useful when working with `dplyr`. Specifically, `x %>% f(y)` is equivalent to `f(x, y)`. Let's look at a simple example, the following two operations are equivalent:
+
+```{r pipe-example}
+mean(sqrt(exp(mtc$mpg)))
+mtc$mpg %>% 
+  exp %>% 
+  sqrt %>% 
+  mean
+```
+
+However, the approach using `%>%` is much easier to read. Let's look at a `dplyr` example:
+
+```{r pipe-dplyr}
+mtc %>% 
+  filter(cyl == 4, horse_power < 70) %>% 
+  mutate(mpg_per_hp = mpg / horse_power) %>% 
+  arrange(mpg_per_hp)
+```
+
+## Grouped operations
+
+Often you'll want to apply some operation independently to groups of rows in a data frame. The `dplyr` function `group_by()` splits a data frame into groups such that all subsequent operations occur within these groups. `group_by` works with all of the verbs described above, but it's most commonly used with `summarise()`
+
+```{r group-by}
+mtc %>% 
+  group_by(cyl) %>% 
+  summarise(mean_mpg = mean(mpg))
+```
+
+## Working with databases
+
+The functions within `dplyr` are usually applied to data frames; however, they can be applied to tables within a SQL database in almost exactly the same way. The only additional steps are to define a connection to the database (i.e. specify where the database is and your login credentials), a process addresssed in the next section. Under the hood, `dplyr` converts function calls to SQL code, but this process is invisible to the user.
+
+One nice feature of `dplyr` is that it tries to be as "lazy" as possible when dealing with databases. This means:
+
+- Data are never pulled from the database unless explicitly asked for, e.g. passed to a function outside `dplyr`.
+- The database is only queried at the last minute possible, `dplyr` keeps track of all the intermediate operations and only converts them to SQL and queries the database when results are explicitly requested.
+- Only the number of rows explicitly needed are pulled from the database.
+
+This is nice because it means queries to the database and downloading data are kept to an absolute minimum. While `dplyr` documentation calls this behaviour "lazy", I'm inclined to just call it "smart".
+
+# Connecting to the KRSP database
+

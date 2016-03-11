@@ -10,7 +10,7 @@
 
 <meta name="author" content="Matt Strimas-Mackey" />
 
-<meta name="date" content="2016-02-28" />
+<meta name="date" content="2016-03-10" />
 
 <title>MySQL in the Cloud with AWS</title>
 
@@ -64,7 +64,7 @@ img {
 <div id="header">
 <h1 class="title">MySQL in the Cloud with AWS</h1>
 <h4 class="author"><em>Matt Strimas-Mackey</em></h4>
-<h4 class="date"><em>2016-02-28</em></h4>
+<h4 class="date"><em>2016-03-10</em></h4>
 </div>
 
 
@@ -138,7 +138,36 @@ img {
 </div>
 <div id="r" class="section level2">
 <h2>R</h2>
-<p>Coming soon.</p>
+<p>MySQL databases can be access in R using a variety of approaches: the <code>RMySQL</code> package, the <code>src_mysql</code> function in <code>dplyr</code>, or <code>krsp_connect</code> function in the custom <code>krsp</code> package. In all cases, you need to create a <code>my.cnf</code> connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.</p>
+<p>On Mac OS and Linux the connection file is <code>~/.my.cnf</code> and on Windows it is located at <code>C:/my.cnf</code>. Open this file, or create it if it doesn’t already exist, and enter the following text:</p>
+<pre><code>[krsp-aws]
+username=msm
+password=F60RUsyiG579PeKdCH
+host=krsp.abc123.us-west-2.rds.amazonaws.com
+port=3306
+database=datasets</code></pre>
+<p>Make sure you edit this to include your own username and password, and the correct host, which is the Public DNS of the AWS instance or the IP address of a remote computer. Mutliple connection profiles can be set up with different names, here I’ve used <code>krsp-aws</code> for the name of this profile.</p>
+<p>To reduce the risk of someone getting access to your database credentials, it’s wise to set the permissions of the <code>.my.cnf</code> file so only you can read it. In the terminal, navigate to the home directory and enter the following command:</p>
+<pre class="bash"><code>sudo chmod 600 .my.cnf</code></pre>
+<p>Note that this doesn’t apply to Windows.</p>
+<p>To create a connection object with <code>RMySQL</code>, run the following code in R:</p>
+<pre class="r"><code>db &lt;-  dbConnect(MySQL(), group = &quot;krsp-aws&quot;)
+dbListTables(db)</code></pre>
+<pre><code>## [1] &quot;FLastAll&quot;       &quot;behaviour&quot;      &quot;census&quot;         &quot;female_year&quot;   
+## [5] &quot;juvenile&quot;       &quot;litter&quot;         &quot;squirrel&quot;       &quot;squirrel_alias&quot;
+## [9] &quot;trapping&quot;</code></pre>
+<p>To connect using <code>src_mysql</code>, note that supplying <code>NULL</code> to the three listing arguements is critical:</p>
+<pre class="r"><code>db &lt;- src_mysql(group = &quot;krsp-aws&quot;, dbname = NULL, password = NULL, user = NULL)
+src_tbls(db)</code></pre>
+<pre><code>## [1] &quot;FLastAll&quot;       &quot;behaviour&quot;      &quot;census&quot;         &quot;female_year&quot;   
+## [5] &quot;juvenile&quot;       &quot;litter&quot;         &quot;squirrel&quot;       &quot;squirrel_alias&quot;
+## [9] &quot;trapping&quot;</code></pre>
+<p>Finally, with <code>krsp_connect</code> there is no need to use <code>NULL</code> arguments.</p>
+<pre class="r"><code>db &lt;- krsp_connect(group = &quot;krsp-aws&quot;)
+krsp_tables(db)</code></pre>
+<pre><code>## [1] &quot;FLastAll&quot;       &quot;behaviour&quot;      &quot;census&quot;         &quot;female_year&quot;   
+## [5] &quot;juvenile&quot;       &quot;litter&quot;         &quot;squirrel&quot;       &quot;squirrel_alias&quot;
+## [9] &quot;trapping&quot;</code></pre>
 </div>
 </div>
 <div id="managing-mysql-users-and-privileges" class="section level1">

@@ -12,7 +12,8 @@ License: MIT + file LICENSE
 LazyData: true
 RoxygenNote: 5.0.1
 Imports: RMySQL,
-    assertthat
+    assertthat,
+    ggvis
 URL: https://github.com/mstrimas/krsp
 BugReports: https://github.com/mstrimas/krsp/issues
 Suggests: knitr,

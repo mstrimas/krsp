@@ -25,6 +25,8 @@ krsp_needs_br.krsp <- function(con, year = current_year()) {
                          all(year >= 1984),
                          all(year <= current_year()))
 
+  year <- as.integer(year)
+
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     litter <- tbl(con, "litter") %>%
