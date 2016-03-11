@@ -48,5 +48,6 @@ krsp_hitlist.krsp <- function(con, year = current_year()) {
     mutate(non_breeder = is.na(part_date)) %>%
     arrange(non_breeder, part_date, gr, squirrel_id) %>%
     collect %>%
+    mutate(squirrel_id = as.integer(squirrel_id)) %>%
     select(-non_breeder)
 }

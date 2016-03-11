@@ -41,5 +41,7 @@ krsp_needs_br.krsp <- function(con, year = current_year()) {
            colorlft, colorrt,
            taglft, tagrt,
            locx, locy,
-           trap_date)
+           trap_date) %>%
+    collect %>%
+    mutate(id = as.integer(id))
 }
