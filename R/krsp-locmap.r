@@ -81,7 +81,7 @@ krsp_locmap.krsp <- function(con, grid, year = current_year()) {
     ggvis::layer_points(fill = ~factor(squirrel_id), shape = ~sex,
                         key := ~id, opacity := 0.7) %>%
     # assign shapes to sexes
-    scale_nominal("shape", range = c("circle", "square")) %>%
+    ggvis::scale_nominal("shape", range = c("circle", "square")) %>%
     # labels for x loc letters
     ggvis::layer_text(~x, ~y, text := ~label,
                       fontSize := 14, fontWeight := "bold",
