@@ -13,7 +13,8 @@ LazyData: true
 RoxygenNote: 5.0.1
 Imports: RMySQL,
     assertthat,
-    ggvis
+    ggvis,
+    DBI
 URL: https://github.com/mstrimas/krsp
 BugReports: https://github.com/mstrimas/krsp/issues
 Suggests: knitr,

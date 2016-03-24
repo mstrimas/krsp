@@ -12,6 +12,7 @@
 #'    database, these can typically be left as; however, to connect to a remote
 #'    instance of the krsp database these will be user specific and must be
 #'    supplied.
+#' @param group character; refers to a group in the my.cnf file
 #' @param ... Additional arguments passed on to \code{\link[dplyr]{src_mysql}}.
 #'
 #' @return A character vector of table names

@@ -18,6 +18,8 @@ database, these can typically be left as; however, to connect to a remote
 instance of the krsp database these will be user specific and must be
 supplied.}
 
+\item{group}{character; refers to a group in the my.cnf file}
+
 \item{...}{Additional arguments passed on to \code{\link[dplyr]{src_mysql}}.}
 }
 \value{
