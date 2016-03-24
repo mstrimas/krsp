@@ -1,10 +1,10 @@
 ---
 title: "MySQL in the Cloud with AWS"
-author: "Matt Strimas-Mackey"
-date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
+    toc_depth: 2
+    theme: united
 vignette: >
   %\VignetteIndexEntry{MySQL in the Cloud with AWS}
   %\VignetteEngine{knitr::rmarkdown}

@@ -1,10 +1,10 @@
 ---
 title: "Working with the KRSP database in R"
-author: "Matt Strimas-Mackey"
-date: "2016-03-24"
 output:
   html_document:
     toc: true
+    toc_depth: 2
+    theme: united
 vignette: >
   %\VignetteIndexEntry{Working with the KRSP database in R}
   %\VignetteEngine{knitr::rmarkdown}
@@ -32,26 +32,6 @@ Here's a brief demonstration of how these verbs work.
 ```r
 #install.packages("dplyr")
 library(dplyr)
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-```
-
-```
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```r
 mtc <- tbl_df(mtcars)
 mtc <- select(mtc, mpg, cyl, horse_power = hp)
 mtc

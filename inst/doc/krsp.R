@@ -1,5 +1,5 @@
 ## ----options, include=F--------------------------------------------------
-knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 options(knitr.table.format = 'markdown')
 
 ## ----st-verbs------------------------------------------------------------
