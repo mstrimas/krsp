@@ -10,7 +10,7 @@
 
 <meta name="author" content="Matt Strimas-Mackey" />
 
-<meta name="date" content="2016-03-11" />
+<meta name="date" content="2016-03-24" />
 
 <title>Querying MySQL Databases in R</title>
 
@@ -64,9 +64,23 @@ img {
 <div id="header">
 <h1 class="title">Querying MySQL Databases in R</h1>
 <h4 class="author"><em>Matt Strimas-Mackey</em></h4>
-<h4 class="date"><em>2016-03-11</em></h4>
+<h4 class="date"><em>2016-03-24</em></h4>
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#sql-only">SQL Only</a><ul>
+<li><a href="#simple-sql-query">Simple SQL Query</a></li>
+<li><a href="#stored-procedure">Stored Procedure</a></li>
+</ul></li>
+<li><a href="#r-interface-to-mysql">R Interface to MySQL</a><ul>
+<li><a href="#rmysql"><code>RMySQL</code></a></li>
+<li><a href="#dplyr"><code>dplyr</code></a><ul>
+<li><a href="#laziness">Laziness</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
 
 <p>In this document, I’ll explore a variety of ways of querying the squirrel database both directly via SQL queries within Navicat and through R. The idea is to come up with the best approach for this using the database both in and out of the field.</p>
 <p>As an example, I’ll consider a simple task: generate a “To Do” list of squirrels that appear in the litter table for a given year but don’t have breeding codes filled in. The context is that every female squirrel caught in a given year must have a litter record with a valid breeding code. Since the field crew often forgets to fill in the breeding code for non-breeders, this list of squirrels would help remind them to confirm the status of these non-breeders.</p>
@@ -170,7 +184,9 @@ db &lt;- dbConnect(drv, host = &quot;localhost&quot;, user = &quot;root&quot;, d
 res &lt;- dbGetQuery(db, &quot;SELECT reflo, squirrel_id FROM census WHERE gr = 'JO' LIMIT 5&quot;)
 dbDisconnect(db)
 ## [1] TRUE
-knitr::kable(res)</code></pre>
+knitr::kable(res)
+## Auto-disconnecting mysql connection (0, 5)
+## Auto-disconnecting mysql connection (0, 4)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -303,13 +319,13 @@ knitr::kable(head(res))</code></pre>
 </tr>
 <tr class="even">
 <td align="left">AG</td>
-<td align="right">21344</td>
-<td align="left">YY</td>
-<td align="left">R</td>
-<td align="left">H4345</td>
-<td align="left">H4951</td>
-<td align="left">A.0</td>
-<td align="left">14.6</td>
+<td align="right">19926</td>
+<td align="left">Y</td>
+<td align="left">G</td>
+<td align="left">H3870</td>
+<td align="left">H3871</td>
+<td align="left">G.5</td>
+<td align="left">6.7</td>
 <td align="left">2015-06-13</td>
 </tr>
 </tbody>
@@ -322,8 +338,6 @@ knitr::kable(head(res))</code></pre>
 <pre class="r"><code>library(dplyr)
 db &lt;- src_mysql(&quot;krsp&quot;, host = &quot;localhost&quot;, user = &quot;root&quot;)
 tbl(db, &quot;census&quot;)</code></pre>
-<pre><code>## Auto-disconnecting mysql connection (0, 6)</code></pre>
-<pre><code>## Auto-disconnecting mysql connection (0, 5)</code></pre>
 <pre><code>## Source: mysql 5.7.9 [root@localhost:/krsp]
 ## From: census [5,379 x 19]
 ## 
@@ -434,13 +448,13 @@ knitr::kable(head(res))</code></pre>
 </tr>
 <tr class="even">
 <td align="left">AG</td>
-<td align="right">21344</td>
+<td align="right">19437</td>
 <td align="left">YY</td>
-<td align="left">R</td>
-<td align="left">H4345</td>
-<td align="left">H4951</td>
-<td align="left">A.0</td>
-<td align="left">14.6</td>
+<td align="left">O</td>
+<td align="left">F7712</td>
+<td align="left">F7713</td>
+<td align="left">V.0</td>
+<td align="left">10.1</td>
 <td align="left">2015-06-13</td>
 </tr>
 </tbody>

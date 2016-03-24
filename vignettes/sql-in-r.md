@@ -1,8 +1,10 @@
 ---
 title: "Querying MySQL Databases in R"
 author: "Matt Strimas-Mackey"
-date: "2016-01-28"
-output: html_document
+date: "2016-03-24"
+output:
+  html_document:
+    toc: true
 vignette: >
   %\VignetteIndexEntry{Querying MySQL Databases in R}
   %\VignetteEngine{knitr::rmarkdown}
@@ -113,6 +115,7 @@ The R package `DBI` provides a interface for connecting to databases in R, and `
 
 ```r
 library(RMySQL)
+## Loading required package: DBI
 drv <- MySQL()
 db <- dbConnect(drv, host = "localhost", user = "root", dbname = "krsp")
 dbListTables(db)
@@ -120,10 +123,11 @@ dbListTables(db)
 ##  [3] "census"                "dbaAdmums"            
 ##  [5] "dbaBehaviour"          "dbaFLastAll"          
 ##  [7] "dbaJuvenile"           "dbaMidden"            
-##  [9] "dbaTrapping"           "historic_squirrel_ids"
-## [11] "juvenile"              "litter"               
-## [13] "pb_data"               "squirrel"             
-## [15] "squirrel_alias"        "trapping"
+##  [9] "dbaTrapping"           "female_year"          
+## [11] "historic_squirrel_ids" "juvenile"             
+## [13] "litter"                "pb_data"              
+## [15] "squirrel"              "squirrel_alias"       
+## [17] "trapping"
 dbDisconnect(db)
 ## [1] TRUE
 ```
@@ -194,7 +198,7 @@ knitr::kable(head(res))
 |AG | 20005|OY       |G       |H3589  |H3590 |S.5  |4.0  |2015-06-12 |
 |AG | 20370|Bk       |O       |H4491  |H4490 |J.5  |4.4  |2015-06-13 |
 |AG | 20670|B        |Bk      |H4853  |H4854 |T.0  |21.9 |2015-06-13 |
-|AG | 21344|YY       |R       |H4345  |H4951 |A.0  |14.6 |2015-06-13 |
+|AG | 19437|YY       |O       |F7712  |F7713 |V.0  |10.1 |2015-06-13 |
 
 ## `dplyr`
 
@@ -205,6 +209,26 @@ Most of the `dplyr` functions (`select`, `filter`, `group_by`, etc.) work the sa
 
 ```r
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 db <- src_mysql("krsp", host = "localhost", user = "root")
 tbl(db, "census")
 ```
@@ -264,7 +288,7 @@ knitr::kable(head(res))
 |AG | 20005|OY       |G       |H3589  |H3590 |S.5  |4.0  |2015-06-12 |
 |AG | 20370|Bk       |O       |H4491  |H4490 |J.5  |4.4  |2015-06-13 |
 |AG | 20670|B        |Bk      |H4853  |H4854 |T.0  |21.9 |2015-06-13 |
-|AG | 21344|YY       |R       |H4345  |H4951 |A.0  |14.6 |2015-06-13 |
+|AG | 19926|Y        |G       |H3870  |H3871 |G.5  |6.7  |2015-06-13 |
 
 ### Laziness
 

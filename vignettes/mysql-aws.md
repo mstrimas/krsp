@@ -1,8 +1,10 @@
 ---
 title: "MySQL in the Cloud with AWS"
 author: "Matt Strimas-Mackey"
-date: "2016-03-09"
-output: html_document
+date: "2016-03-24"
+output:
+  html_document:
+    toc: true
 vignette: >
   %\VignetteIndexEntry{MySQL in the Cloud with AWS}
   %\VignetteEngine{knitr::rmarkdown}
@@ -10,6 +12,9 @@ vignette: >
 ---
 
 
+```
+## Loading required package: DBI
+```
 
 [Amazon Web Services](http://aws.amazon.com) (AWS) is a platform that offers a bewildering array of cloud computing services. Among their many products is the [Relational Database Service](https://aws.amazon.com/rds/) (RDS) which gives users the ability to quickly deploy virtual computers (called instances) to house databases in the cloud. The specifications (number of cores, RAM, and storage) of an instance can be tailored to the size of the database and number of users, and AWS charges an [hourly rate](https://aws.amazon.com/rds/pricing/) that depends on the computing power of the instance. 
 
@@ -103,7 +108,7 @@ After you've entered all the necessary information click *Close*, then click on 
 
 ## R
 
-MySQL databases can be access in R using a variety of approaches: the `RMySQL` package, the `src_mysql` function in `dplyr`, or `krsp_connect` function in the custom `krsp` package. In all cases, you need to create a `my.cnf` connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.
+MySQL databases can be accessed in R using a variety of approaches: the `RMySQL` package, the `src_mysql` function in `dplyr`, or `krsp_connect` function in the custom `krsp` package. In all cases, you need to create a `my.cnf` connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.
 
 On Mac OS and Linux the connection file is `~/.my.cnf` and on Windows it is located at `C:/my.cnf`. Open this file, or create it if it doesn't already exist, and enter the following text:
 
@@ -113,7 +118,7 @@ username=msm
 password=F60RUsyiG579PeKdCH
 host=krsp.abc123.us-west-2.rds.amazonaws.com
 port=3306
-database=datasets
+database=krsp
 ```
 
 Make sure you edit this to include your own username and password, and the correct host, which is the Public DNS of the AWS instance or the IP address of a remote computer. Mutliple connection profiles can be set up with different names, here I've used `krsp-aws` for the name of this profile.

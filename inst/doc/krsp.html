@@ -10,7 +10,7 @@
 
 <meta name="author" content="Matt Strimas-Mackey" />
 
-<meta name="date" content="2016-03-11" />
+<meta name="date" content="2016-03-24" />
 
 <title>Working with the KRSP database in R</title>
 
@@ -64,9 +64,25 @@ img {
 <div id="header">
 <h1 class="title">Working with the KRSP database in R</h1>
 <h4 class="author"><em>Matt Strimas-Mackey</em></h4>
-<h4 class="date"><em>2016-03-11</em></h4>
+<h4 class="date"><em>2016-03-24</em></h4>
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#dplyr-basics"><code>dplyr</code> basics</a><ul>
+<li><a href="#chaining-operations-with">Chaining operations with <code>%&gt;%</code></a></li>
+<li><a href="#grouped-operations">Grouped operations</a></li>
+<li><a href="#working-with-databases">Working with databases</a></li>
+</ul></li>
+<li><a href="#connecting-to-the-krsp-database">Connecting to the KRSP database</a><ul>
+<li><a href="#local-instance">Local instance</a></li>
+<li><a href="#remote-instance">Remote instance</a><ul>
+<li><a href="#the-quickwrong-way">The quick/wrong way</a></li>
+<li><a href="#the-correctsecure-way">The correct/secure way</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
 
 <p>The <code>krsp</code> package offers a set of tools for working with the KRSP MySQL database in R. Functions fall into two categories: standard database queries and helper functions for writing custom queries. The former require very little knowledge of R or the database to run. For writing your own queries, this package takes a SQL-free approach, instead using the <code>dplyr</code> MySQL interface. Therefore, if you’re not already familiar with <code>dplyr</code>, it will be useful to read through one of the many <a href="http://seananderson.ca/2014/09/13/dplyr-intro.html">tutorials online</a> or look through the vignette with <code>vignette(&quot;introduction&quot;, &quot;dplyr&quot;)</code>. I provide an extremely brief introduction below.</p>
 <div id="dplyr-basics" class="section level1">
@@ -202,6 +218,50 @@ mtc</code></pre>
 </div>
 <div id="connecting-to-the-krsp-database" class="section level1">
 <h1>Connecting to the KRSP database</h1>
+<p>Before accessing tables in a MySQL database you need to create a connection object that defines the location and authentication details for the connection. The function <code>krsp_connect()</code> is designed to create this connection object, which you will then pass as a parameter to other functions in this package. I outline three different ways of connecting to the KRSP database for three common scenarios.</p>
+<div id="local-instance" class="section level2">
+<h2>Local instance</h2>
+<p>The simplest situation is if you have a local copy of the database that you connect to with username <code>root</code> and no password. This is the default for <code>krsp_connect()</code> so creating a connection object is as simple as:</p>
+<pre class="r"><code>library(krsp)
+con &lt;- krsp_connect()</code></pre>
+</div>
+<div id="remote-instance" class="section level2">
+<h2>Remote instance</h2>
+<p>Things get a little more complicated if you want to connect to a remote KRSP database. This could either be a cloud database hosted by Amazon Web Services (AWS) or a database on a computer on your local network, which would be the setup at Squirrel Camp. In either case, you’ll need to configure the database correctly so it accepts connections, and set up users, passwords, and privileges. Before you proceed, you’ll need the following pieces of information:</p>
+<ul>
+<li><strong>Host</strong>: the address of the computer where the database lives, either an IP address (e.g. <code>192.168.0.1</code>) or a host name (e.g. <code>krsp.abc123.us-west-2.rds.amazonaws.com</code>).</li>
+<li><strong>Username</strong>: a valid username that has been assigned privileges to access the KRSP database.</li>
+<li><strong>Password</strong>: password for the given username.</li>
+</ul>
+<p>With this information there are two ways to connect: the quick/wrong way and the correct/secure way.</p>
+<div id="the-quickwrong-way" class="section level3">
+<h3>The quick/wrong way</h3>
+<p>The easiest way to quickly connect to a remote database is to pass all the connection and authentication details directly to <code>krsp_connect()</code> as parameters. This is usually a terrible idea because your username and password will be stored in plain text and, in the long run, it will be more work because you’ll have to type all the details in each time you connect. Here’s how you do it:</p>
+<pre class="r"><code>con &lt;- krsp_connect(host = &quot;krsp.abc123.us-west-2.rds.amazonaws.com&quot;,
+                    user = &quot;msm&quot;,
+                    password = &quot;s0mepaSSword&quot;)</code></pre>
+<p>where the <code>host</code>, <code>user</code>, and <code>password</code> parameters are replaced with the correct values for your situation.</p>
+<p>The one situation where this method may make sense is at Squirrel Camp. In this situation the database is isolated from the internet anyway, so it may be easiest to just create a single user (e.g. <code>squirreler</code>) with <code>SELECT</code> only privileges and no password. Then connecting is as simple as:</p>
+<pre class="r"><code>con &lt;- krsp_connect(host = &quot;192.168.0.1&quot;, user = &quot;squirreler&quot;)</code></pre>
+<p>where <code>192.168.0.1</code> should be replaced with the IP address on the local network of the camp computer with the database.</p>
+</div>
+<div id="the-correctsecure-way" class="section level3">
+<h3>The correct/secure way</h3>
+<p>The right way to connect to a remote database, especially in the cloud on AWS, is to specify the connection information in a <code>my.cnf</code> connection file. This is a file that MySQL references to retrieve the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.</p>
+<p>On Mac OS and Linux the connection file is <code>~/.my.cnf</code> and on Windows it is located at <code>C:/my.cnf</code>. Open this file, or create it if it doesn’t already exist, and enter the following text:</p>
+<pre><code>[krsp-aws]
+username=msm
+password=s0mepaSSword
+host=krsp.abc123.us-west-2.rds.amazonaws.com
+port=3306
+database=krsp</code></pre>
+<p>Make sure you edit this to include your own username and password, and the correct host, which is the Public DNS of the AWS instance or the IP address of a remote computer. Multiple connection profiles can be set up with different names, here I’ve used <code>krsp-aws</code> for the name of this profile.</p>
+<p>To reduce the risk of someone getting access to your database credentials, it’s wise to set the permissions of the <code>.my.cnf</code> file so only you can read it. On Mac OS or Linux, open the Terminal and enter the following command:</p>
+<pre class="bash"><code>sudo chmod 600 ~/.my.cnf</code></pre>
+<p>To create a connection object provide the name of the <code>my.cnf</code> profile to the <code>group</code> parameter of <code>krsp_connect()</code>:</p>
+<pre class="r"><code>con &lt;- krsp_connect(group = &quot;krsp-aws&quot;)</code></pre>
+</div>
+</div>
 </div>
 
 

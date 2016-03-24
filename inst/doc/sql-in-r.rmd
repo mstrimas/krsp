@@ -2,7 +2,9 @@
 title: "Querying MySQL Databases in R"
 author: "Matt Strimas-Mackey"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    toc: true
 vignette: >
   %\VignetteIndexEntry{Querying MySQL Databases in R}
   %\VignetteEngine{knitr::rmarkdown}

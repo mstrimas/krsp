@@ -2,7 +2,9 @@
 title: "Working with the KRSP database in R"
 author: "Matt Strimas-Mackey"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    toc: true
 vignette: >
   %\VignetteIndexEntry{Working with the KRSP database in R}
   %\VignetteEngine{knitr::rmarkdown}
@@ -88,3 +90,73 @@ This is nice because it means queries to the database and downloading data are k
 
 # Connecting to the KRSP database
 
+Before accessing tables in a MySQL database you need to create a connection object that defines the location and authentication details for the connection. The function `krsp_connect()` is designed to create this connection object, which you will then pass as a parameter to other functions in this package. I outline three different ways of connecting to the KRSP database for three common scenarios.
+
+## Local instance
+
+The simplest situation is if you have a local copy of the database that you connect to with username `root` and no password. This is the default for `krsp_connect()` so creating a connection object is as simple as:
+
+```r
+library(krsp)
+con <- krsp_connect()
+```
+
+## Remote instance
+
+Things get a little more complicated if you want to connect to a remote KRSP database. 
+This could either be a cloud database hosted by Amazon Web Services (AWS) or a database on a computer on your local network, which would be the setup at Squirrel Camp. In either case, you'll need to configure the database correctly so it accepts connections, and set up users, passwords, and privileges. Before you proceed, you'll need the following pieces of information:
+
+- **Host**: the address of the computer where the database lives, either an IP address (e.g. `192.168.0.1`) or a host name (e.g. `krsp.abc123.us-west-2.rds.amazonaws.com`).
+- **Username**: a valid username that has been assigned privileges to access the KRSP database.
+- **Password**: password for the given username.
+
+With this information there are two ways to connect: the quick/wrong way and the correct/secure way.
+
+### The quick/wrong way
+
+The easiest way to quickly connect to a remote database is to pass all the connection and authentication details directly to `krsp_connect()` as parameters. This is usually a terrible idea because your username and password will be stored in plain text and, in the long run, it will be more work because you'll have to type all the details in each time you connect. Here's how you do it:
+
+```r
+con <- krsp_connect(host = "krsp.abc123.us-west-2.rds.amazonaws.com",
+                    user = "msm",
+                    password = "s0mepaSSword")
+```
+
+where the `host`, `user`, and `password` parameters are replaced with the correct values for your situation.
+
+The one situation where this method may make sense is at Squirrel Camp. In this situation the database is isolated from the internet anyway, so it may be easiest to just create a single user (e.g. `squirreler`) with `SELECT` only privileges and no password. Then connecting is as simple as:
+
+```r
+con <- krsp_connect(host = "192.168.0.1", user = "squirreler")
+```
+
+where `192.168.0.1` should be replaced with the IP address on the local network of the camp computer with the database.
+
+### The correct/secure way
+
+The right way to connect to a remote database, especially in the cloud on AWS, is to specify the connection information in a `my.cnf` connection file. This is a file that MySQL references to retrieve the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.
+
+On Mac OS and Linux the connection file is `~/.my.cnf` and on Windows it is located at `C:/my.cnf`. Open this file, or create it if it doesn't already exist, and enter the following text:
+
+```
+[krsp-aws]
+username=msm
+password=s0mepaSSword
+host=krsp.abc123.us-west-2.rds.amazonaws.com
+port=3306
+database=krsp
+```
+
+Make sure you edit this to include your own username and password, and the correct host, which is the Public DNS of the AWS instance or the IP address of a remote computer. Multiple connection profiles can be set up with different names, here I've used `krsp-aws` for the name of this profile.
+
+To reduce the risk of someone getting access to your database credentials, it's wise to set the permissions of the `.my.cnf` file so only you can read it. On Mac OS or Linux, open the Terminal and enter the following command:
+
+```bash
+sudo chmod 600 ~/.my.cnf
+```
+
+To create a connection object provide the name of the `my.cnf` profile to the `group` parameter of `krsp_connect()`:
+ 
+```r
+con <- krsp_connect(group = "krsp-aws")
+```

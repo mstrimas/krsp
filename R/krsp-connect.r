@@ -2,17 +2,20 @@
 #'
 #' \code{krsp_connect} is a wrapper for \code{\link[dplyr]{src_mysql}} that
 #' connects to the KRSP database. By default, this function will connect to a
-#' local copy of the database. The host, username, and password must be supplied
-#' if a remote database is to be used.
+#' local copy of the database as root user with no password. When connecting to
+#' a remote database, the host, username, and password must be supplied. This
+#' information can be passed as parameters to \code{krsp_connect}, however, it's
+#' much safer to store these authentication parameters in a my.cnf file. Consult
+#' the vignette for this package for further details.
 #'
 #' @param dbname database name; defaults to \code{krsp}
-#' @param host,port Host name and port of krsp database. Defaults to a local
+#' @param host,port character; host name and port of krsp database. Defaults to a local
 #'    instance of the database.
-#' @param user,password Username and password. For a local instance of the
-#'    database, these can typically be left as; however, to connect to a remote
+#' @param user,password character; username and password. For a local instance of the
+#'    database, these can typically be left as is; however, to connect to a remote
 #'    instance of the krsp database these will be user specific and must be
 #'    supplied.
-#' @param group character; refers to a group in the my.cnf file
+#' @param group character; my.cnf option group
 #' @param ... Additional arguments passed on to \code{\link[dplyr]{src_mysql}}.
 #'
 #' @return A character vector of table names

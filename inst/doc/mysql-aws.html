@@ -10,7 +10,7 @@
 
 <meta name="author" content="Matt Strimas-Mackey" />
 
-<meta name="date" content="2016-03-11" />
+<meta name="date" content="2016-03-24" />
 
 <title>MySQL in the Cloud with AWS</title>
 
@@ -64,11 +64,45 @@ img {
 <div id="header">
 <h1 class="title">MySQL in the Cloud with AWS</h1>
 <h4 class="author"><em>Matt Strimas-Mackey</em></h4>
-<h4 class="date"><em>2016-03-11</em></h4>
+<h4 class="date"><em>2016-03-24</em></h4>
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#deploying-an-rds-instance">Deploying an RDS Instance</a><ul>
+<li><a href="#creating-a-security-group">Creating a security group</a></li>
+<li><a href="#launching-the-instance">Launching the instance</a><ul>
+<li><a href="#step-1-select-engine">Step 1: Select Engine</a></li>
+<li><a href="#step-2-production">Step 2: Production?</a></li>
+<li><a href="#step-3-specify-db-details">Step 3: Specify DB Details</a></li>
+<li><a href="#step-4-configure-advanced-settings">Step 4: Configure Advanced Settings</a></li>
+</ul></li>
+<li><a href="#instance-address">Instance address</a></li>
+</ul></li>
+<li><a href="#connecting-to-mysql-on-aws">Connecting to MySQL on AWS</a><ul>
+<li><a href="#navicat">Navicat</a></li>
+<li><a href="#mysql-workbench">MySQL Workbench</a></li>
+<li><a href="#r">R</a></li>
+</ul></li>
+<li><a href="#managing-mysql-users-and-privileges">Managing MySQL Users and Privileges</a><ul>
+<li><a href="#users-hosts-and-privileges">Users, hosts, and privileges</a><ul>
+<li><a href="#hosts">Hosts</a></li>
+<li><a href="#privileges">Privileges</a></li>
+</ul></li>
+<li><a href="#mysql-workbench-1">MySQL Workbench</a><ul>
+<li><a href="#schema-privileges">Schema privileges</a></li>
+<li><a href="#administrator-roles">Administrator roles</a></li>
+<li><a href="#revoking-privileges">Revoking privileges</a></li>
+</ul></li>
+<li><a href="#best-practices-for-the-krsp-database">Best practices for the KRSP database</a><ul>
+<li><a href="#normal-users">Normal users</a></li>
+<li><a href="#administrators">Administrators</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#migrating-the-database">Migrating the Database</a></li>
+</ul>
+</div>
 
-<pre><code>## Loading required package: DBI</code></pre>
 <p><a href="http://aws.amazon.com">Amazon Web Services</a> (AWS) is a platform that offers a bewildering array of cloud computing services. Among their many products is the <a href="https://aws.amazon.com/rds/">Relational Database Service</a> (RDS) which gives users the ability to quickly deploy virtual computers (called instances) to house databases in the cloud. The specifications (number of cores, RAM, and storage) of an instance can be tailored to the size of the database and number of users, and AWS charges an <a href="https://aws.amazon.com/rds/pricing/">hourly rate</a> that depends on the computing power of the instance.</p>
 <p>The diversity and flexibility of AWS makes it extremely powerful; however, it also makes simple tasks daunting and confusing. This document will focus on a single, well-defined goal: setting up MySQL Server on an AWS RDS instance and migrating an existing database to the cloud. The only prerequisite is an AWS account, which you can <a href="http://aws.amazon.com">sign up for</a> if you haven’t already. A credit card is required to sign up, but you will only be charged for computing time you use, and Amazon offers an excellent <a href="https://aws.amazon.com/free/">free tier</a> that is suitable for small databases.</p>
 <div id="deploying-an-rds-instance" class="section level1">
@@ -139,14 +173,14 @@ img {
 </div>
 <div id="r" class="section level2">
 <h2>R</h2>
-<p>MySQL databases can be access in R using a variety of approaches: the <code>RMySQL</code> package, the <code>src_mysql</code> function in <code>dplyr</code>, or <code>krsp_connect</code> function in the custom <code>krsp</code> package. In all cases, you need to create a <code>my.cnf</code> connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.</p>
+<p>MySQL databases can be accessed in R using a variety of approaches: the <code>RMySQL</code> package, the <code>src_mysql</code> function in <code>dplyr</code>, or <code>krsp_connect</code> function in the custom <code>krsp</code> package. In all cases, you need to create a <code>my.cnf</code> connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.</p>
 <p>On Mac OS and Linux the connection file is <code>~/.my.cnf</code> and on Windows it is located at <code>C:/my.cnf</code>. Open this file, or create it if it doesn’t already exist, and enter the following text:</p>
 <pre><code>[krsp-aws]
 username=msm
 password=F60RUsyiG579PeKdCH
 host=krsp.abc123.us-west-2.rds.amazonaws.com
 port=3306
-database=datasets</code></pre>
+database=krsp</code></pre>
 <p>Make sure you edit this to include your own username and password, and the correct host, which is the Public DNS of the AWS instance or the IP address of a remote computer. Mutliple connection profiles can be set up with different names, here I’ve used <code>krsp-aws</code> for the name of this profile.</p>
 <p>To reduce the risk of someone getting access to your database credentials, it’s wise to set the permissions of the <code>.my.cnf</code> file so only you can read it. In the terminal, navigate to the home directory and enter the following command:</p>
 <pre class="bash"><code>sudo chmod 600 .my.cnf</code></pre>

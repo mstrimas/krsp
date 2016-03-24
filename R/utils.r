@@ -15,7 +15,6 @@ check_loc <- function(x) {
   grepl("^([A-Z]|(-?[0-9]{1,2}))([.][0-9])?$", x, ignore.case = TRUE)
 }
 
-#' @export
 loc_to_numeric <- function(x) {
   assertthat::assert_that(is.character(x))
   x <- toupper(gsub('[[:space:]]', '', x))
