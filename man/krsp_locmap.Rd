@@ -12,9 +12,13 @@ krsp_locmap(con, grid, year)
 \item{grid}{character; a single grid to map}
 
 \item{year}{integer; defaults to current year}
+
+\item{data}{logical; if TRUE return data frame instead of plotting}
 }
 \value{
-Displays and returns a \code{ggvis} plot of rattle locations.
+Displays and returns a \code{ggvis} plot of rattle locations, unless
+  \code{data} is TRUE, in which case a data frame is returned and nothing is
+  plotted.
 }
 \description{
 Create an interative plot of rattle or feeding behaviour on given grid and in
@@ -25,6 +29,8 @@ that pops up in the Viewer pane in RStudio.
 }
 \examples{
 con <- krsp_connect()
-krsp_locmap(con, "AG", 2015)
+krsp_locmap(con, "JO", 2014, data = TRUE) \%>\%
+  head
+krsp_locmap(con, "KL", 2015)
 }
 

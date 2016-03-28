@@ -1,20 +1,27 @@
 #' Display seasonal data collection progress
 #'
+#' Display an interactive visualization of data collection progress for the
+#' season. All females caught in the given year are inlcuded provided their most
+#' recent trapping record has fate 1-3.
+#'
 #' @param con Connection to KRSP database
 #' @param grid character; a single grid to map
 #' @param year integer; defaults to current year
+#' @param data logical; if TRUE return data frame instead of plotting
 #'
-#' @return Displays and returns a \code{ggvis} plot of rattle locations.
+#' @return Displays and returns a \code{ggvis} plot of seasonal workflow
+#'   progress for all females, unless \code{data} is TRUE, in which case a data
+#'   frame is returned and nothing is plotted.
 #' @export
 #' @examples
 #' con <- krsp_connect()
-#' krsp_progress(con, "AG", 2015)
+#' krsp_progress(con, "JO", 2015)
 krsp_progress <- function(con, grid, year) {
   UseMethod("krsp_progress")
 }
 
 #' @export
-krsp_progress.krsp <- function(con, grid, year = current_year()) {
+krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
   # assertions
   assertthat::assert_that(assertthat::is.count(year),
                           all(year >= 1984),
@@ -42,10 +49,17 @@ krsp_progress.krsp <- function(con, grid, year = current_year()) {
       AND (t.squirrel_id, t.date) IN (
         SELECT squirrel_id, MAX(date) as max_date
         FROM trapping
-        WHERE YEAR(date) = %i
-        GROUP BY squirrel_id
-      );", grid_choice, year)
-
+        WHERE date < '2015-05-15' AND YEAR(date) = %i
+        GROUP BY squirrel_id)
+      AND t.squirrel_id NOT IN (
+        SELECT j.squirrel_id
+        FROM JUVENILE     j
+        LEFT JOIN LITTER  l
+          ON j.litter_id = l.id
+        WHERE
+          YEAR(COALESCE(fieldBDate, date1, tagDt)) = %i
+          AND GRID = '%s'
+        );", grid_choice, year, year, grid_choice)
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     females <- DBI::dbGetQuery(con$con, female_query)
@@ -67,13 +81,16 @@ krsp_progress.krsp <- function(con, grid, year = current_year()) {
   # bring in litter data
   females <- left_join(females, litter, by = "squirrel_id") %>%
     arrange(squirrel_id, ln) %>%
-    mutate(nest_status =
-             ifelse(!is.na(tagDt), "N2",
-                    ifelse(!is.na(date1), "N1",
-                           ifelse(!is.na(fieldBDate), "Parturition", NA))),
-           trap_status = ifelse(nipple == 5, "LL",
+    mutate(nest_date = pmax(fieldBDate, date1, tagDt, na.rm = TRUE),
+           nest_status = ifelse(!is.na(tagDt), "N2",
+                                ifelse(!is.na(date1), "N1",
+                                       ifelse(!is.na(fieldBDate), "Parturition", NA))),
+           trap_status = ifelse(!is.na(nipple) & nipple == 5, "LL",
                                 ifelse(rep_con == 1, "P0/P1",
-                                       ifelse(rep_con == 4, "P2/P3", NA)))
+                                       ifelse(rep_con == 4, "P2/P3", NA))),
+           status = ifelse(!is.na(nest_status),
+                           ifelse(trap_status == "LL" & nest_date <= date,
+                                  "LL", nest_status), trap_status)
     )
   females
 }

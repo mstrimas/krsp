@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, echo=F}
+```{r setup, echo=F, message=F}
 library(RMySQL)
 library(dplyr)
 library(krsp)
@@ -245,4 +245,20 @@ In addition to these read only users, the KRSP database will require some admini
 
 # Migrating the Database
 
-Coming soon.
+Now that we have MySQL running in the cloud on AWS, it's time to populate it with some data. In particular I'll describe how to migrate a local instance of the KRSP database to the cloud. There are a variety of ways to do this, but I'll focus on using MySQL Workbench since it's a free, cross-platform solution that doesn't require the command line.
+
+## Export
+
+Open up MySQL Workbench and connect to the local KRSP database. In the left pane, under *MANAGEMENT*, click *Data Export* and select the check box next to the `krsp` scheme. Then click *Unselect All* and select the check boxes next to the tables you want to migrate. If you want to migrate all the tables click *Select Tables*; however, this will include all the old DB2 tables, which may be undesirable. One **important note** is that you must not select any views if they exist since AWS doesn't allow migrating views in this way.
+
+<img src="img/export-krsp.png" style="display: block; margin: auto;" />
+
+Chose to *Export to Self-Contained File* and pick a sensible file name and location. Click *Start Export* and MySQL Workbench will output a .sql file to the location you specified.
+
+## Import
+
+Now close the connection to the local KRSP database and open a connection to the AWS database we created earlier; you'll need to log in as an administrator. In the left pane, under *MANAGEMENT*, click *Data Import*, select *Import from Self-Contained File* and pick the file you just exported. Click *Start Import* and wait for all the data to copy over.
+
+<img src="img/import-krsp.png" style="display: block; margin: auto;" />
+
+At this point, you'll want to check to ensure that all the tables have been copied over as expected.

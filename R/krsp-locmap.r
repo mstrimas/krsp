@@ -9,18 +9,23 @@
 #' @param con Connection to KRSP database
 #' @param grid character; a single grid to map
 #' @param year integer; defaults to current year
+#' @param data logical; if TRUE return data frame instead of plotting
 #'
-#' @return Displays and returns a \code{ggvis} plot of rattle locations.
+#' @return Displays and returns a \code{ggvis} plot of rattle locations, unless
+#'   \code{data} is TRUE, in which case a data frame is returned and nothing is
+#'   plotted.
 #' @export
 #' @examples
 #' con <- krsp_connect()
-#' krsp_locmap(con, "AG", 2015)
+#' krsp_locmap(con, "JO", 2014, data = TRUE) %>%
+#'   head
+#' krsp_locmap(con, "KL", 2015)
 krsp_locmap <- function(con, grid, year) {
   UseMethod("krsp_locmap")
 }
 
 #' @export
-krsp_locmap.krsp <- function(con, grid, year = current_year()) {
+krsp_locmap.krsp <- function(con, grid, year = current_year(), data = FALSE) {
   # assertions
   assertthat::assert_that(assertthat::is.count(year),
                           all(year >= 1984),
@@ -57,6 +62,12 @@ krsp_locmap.krsp <- function(con, grid, year = current_year()) {
     filter(!is.na(x), !is.na(y)) %>%
     mutate(id = row_number()) %>%
     select(id, squirrel_id, x, y, grid, sex, colours, tags, date, trap_date)
+
+  # skip plotting and return data frame instead
+  if (data) {
+    return(results)
+  }
+
   # create interactive plot
   popup <- function(x) {
     row <- results[x$id, ]

@@ -1,4 +1,4 @@
-## ----setup, echo=F-------------------------------------------------------
+## ----setup, echo=F, message=F--------------------------------------------
 library(RMySQL)
 library(dplyr)
 library(krsp)

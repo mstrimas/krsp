@@ -12,15 +12,21 @@ krsp_progress(con, grid, year)
 \item{grid}{character; a single grid to map}
 
 \item{year}{integer; defaults to current year}
+
+\item{data}{logical; if TRUE return data frame instead of plotting}
 }
 \value{
-Displays and returns a \code{ggvis} plot of rattle locations.
+Displays and returns a \code{ggvis} plot of seasonal workflow
+  progress for all females, unless \code{data} is TRUE, in which case a data
+  frame is returned and nothing is plotted.
 }
 \description{
-Display seasonal data collection progress
+Display an interactive visualization of data collection progress for the
+season. All females caught in the given year are inlcuded provided their most
+recent trapping record has fate 1-3.
 }
 \examples{
 con <- krsp_connect()
-krsp_progress(con, "AG", 2015)
+krsp_progress(con, "JO", 2015)
 }
 
