@@ -4,14 +4,20 @@
 \alias{krsp_locmap}
 \title{Map behaviour records on grid}
 \usage{
-krsp_locmap(con, grid, year)
+krsp_locmap(con, grid, year, from_date, to_date, data)
 }
 \arguments{
 \item{con}{Connection to KRSP database}
 
 \item{grid}{character; a single grid to map}
 
-\item{year}{integer; defaults to current year}
+\item{year}{integer}
+
+\item{from_date}{Date object or character representation of date in YMD format
+(e.g. "2016-05-25"); only show records that are on or after this date}
+
+\item{to_date}{Date object or character representation of date in YMD format
+(e.g. "2016-05-25"); only show records that are on or before this date}
 
 \item{data}{logical; if TRUE return data frame instead of plotting}
 }
@@ -27,10 +33,18 @@ different symbols, and further information is available in a tool tip on
 mouseover. Plotting is done using \code{ggvis}, which creates an HTML object
 that pops up in the Viewer pane in RStudio.
 }
+\details{
+Records can be further filtered to a date range using \code{from_date} and
+\code{to_date} arguments. If both dates are provided, they must be in the
+same year, and \code{year} is ignored. If one of the two is provided it must
+be in the same year as the \code{year} argument.
+}
 \examples{
 con <- krsp_connect()
 krsp_locmap(con, "JO", 2014, data = TRUE) \%>\%
   head
 krsp_locmap(con, "KL", 2015)
+krsp_locmap(con, "SU", 2014, from_date = "2014-04-01")
+krsp_locmap(con, "AG", from_date = "2014-04-01", to_date = "2014-04-30")
 }
 
