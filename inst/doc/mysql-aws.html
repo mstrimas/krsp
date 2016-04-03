@@ -170,23 +170,11 @@ database=krsp</code></pre>
 <pre class="bash"><code>sudo chmod 600 .my.cnf</code></pre>
 <p>Note that this doesn’t apply to Windows.</p>
 <p>To create a connection object with <code>RMySQL</code>, run the following code in R:</p>
-<pre class="r"><code>db &lt;-  dbConnect(MySQL(), group = &quot;krsp-aws&quot;)
-dbListTables(db)</code></pre>
-<pre><code>## [1] &quot;FLastAll&quot;       &quot;behaviour&quot;      &quot;census&quot;         &quot;female_year&quot;   
-## [5] &quot;juvenile&quot;       &quot;litter&quot;         &quot;squirrel&quot;       &quot;squirrel_alias&quot;
-## [9] &quot;trapping&quot;</code></pre>
+<pre class="r"><code>db &lt;-  dbConnect(MySQL(), group = &quot;krsp-aws&quot;)</code></pre>
 <p>To connect using <code>src_mysql</code>, note that supplying <code>NULL</code> to the three listing arguements is critical:</p>
-<pre class="r"><code>db &lt;- src_mysql(group = &quot;krsp-aws&quot;, dbname = NULL, password = NULL, user = NULL)
-src_tbls(db)</code></pre>
-<pre><code>## [1] &quot;FLastAll&quot;       &quot;behaviour&quot;      &quot;census&quot;         &quot;female_year&quot;   
-## [5] &quot;juvenile&quot;       &quot;litter&quot;         &quot;squirrel&quot;       &quot;squirrel_alias&quot;
-## [9] &quot;trapping&quot;</code></pre>
+<pre class="r"><code>db &lt;- src_mysql(group = &quot;krsp-aws&quot;, dbname = NULL, password = NULL, user = NULL)</code></pre>
 <p>Finally, with <code>krsp_connect</code> there is no need to use <code>NULL</code> arguments.</p>
-<pre class="r"><code>db &lt;- krsp_connect(group = &quot;krsp-aws&quot;)
-krsp_tables(db)</code></pre>
-<pre><code>## [1] &quot;FLastAll&quot;       &quot;behaviour&quot;      &quot;census&quot;         &quot;female_year&quot;   
-## [5] &quot;juvenile&quot;       &quot;litter&quot;         &quot;squirrel&quot;       &quot;squirrel_alias&quot;
-## [9] &quot;trapping&quot;</code></pre>
+<pre class="r"><code>db &lt;- krsp_connect(group = &quot;krsp-aws&quot;)</code></pre>
 </div>
 </div>
 <div id="managing-mysql-users-and-privileges" class="section level1">

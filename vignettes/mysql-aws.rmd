@@ -133,23 +133,20 @@ Note that this doesn't apply to Windows.
 
 To create a connection object with `RMySQL`, run the following code in R:
 
-```{r rmysql}
+```{r rmysql, eval=F}
 db <-  dbConnect(MySQL(), group = "krsp-aws")
-dbListTables(db)
 ```
 
 To connect using `src_mysql`, note that supplying `NULL` to the three listing arguements is critical:
 
-```{r src-mysql}
+```{r src-mysql, eval=F}
 db <- src_mysql(group = "krsp-aws", dbname = NULL, password = NULL, user = NULL)
-src_tbls(db)
 ```
 
  Finally, with `krsp_connect` there is no need to use `NULL` arguments.
  
-```{r krsp-connect}
+```{r krsp-connect, eval=F}
 db <- krsp_connect(group = "krsp-aws")
-krsp_tables(db)
 ```
 
 # Managing MySQL Users and Privileges

@@ -96,7 +96,7 @@ krsp_locmap.krsp <- function(con, grid, year, from_date, to_date,
                     colorlft = ifelse(is.na(colorlft), "-", colorlft),
                     colorrt = ifelse(is.na(colorrt), "-", colorrt),
                     taglft = ifelse(is.na(taglft), "-", taglft),
-                    colorrt = ifelse(is.na(colorrt), "-", colorrt),
+                    tagrt = ifelse(is.na(tagrt), "-", tagrt),
                     colours = paste(colorlft, colorrt, sep = "/"),
                     tags = paste(taglft, tagrt, sep = "/")) %>%
     filter(!is.na(x), !is.na(y)) %>%
