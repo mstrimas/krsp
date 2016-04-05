@@ -118,7 +118,7 @@ krsp_locmap.krsp <- function(con, grid, year, from_date, to_date,
 
   # create interactive plot
   popup <- function(x) {
-    row <- results[x$id, ]
+    row <- results[results$id == x$id, ]
     paste(
       sprintf("<strong>Date:</strong> %s", row$date),
       sprintf("<strong>Colours:</strong> %s", row$colours),

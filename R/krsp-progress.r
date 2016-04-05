@@ -26,7 +26,7 @@
 #' con <- krsp_connect()
 #' krsp_progress(con, "JO", 2015, data = TRUE) %>%
 #'   head
-#' krsp_progress(con, "KL", 2015)
+#' krsp_progress(con, "KL", 2011)
 krsp_progress <- function(con, grid, year, data) {
   UseMethod("krsp_progress")
 }
@@ -49,6 +49,7 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
       t.id, t.squirrel_id, t.date,
       s.taglft, s.tagrt,
       s.colorlft, s.colorrt,
+      t.locx, t.locy,
       t.ft, t.rep_con, t.nipple
     FROM
       trapping t
@@ -96,6 +97,7 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
     # sort out the various permutations of data - messy!
     mutate(
       date = suppressWarnings(as.Date(lubridate::ymd(date))),
+      ln = ifelse(is.na(ln), 0, ln),
       nest_date = pmax(fieldBDate, date1, tagDt, na.rm = TRUE),
       nest_date = suppressWarnings(as.Date(lubridate::ymd(nest_date))),
       nest_status = ifelse(!is.na(tagDt), "N2",
@@ -130,15 +132,24 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
       tagrt = ifelse(is.na(tagrt) | tagrt == "", "-", tagrt),
       colours = paste(colorlft, colorrt, sep = "/"),
       tags = paste(taglft, tagrt, sep = "/"),
-      label = sprintf("%s. %11s %7s %1s", id, tags, colours,
-                      ifelse(is.na(ln), "-", as.character(ln))),
-      label = factor(label)
-    ) %>%
+      label = sprintf("%s %s %s %s", squirrel_id, tags, colours, ln),
+      label = factor(label))
+  # sensible ordering
+  females <- group_by(females, squirrel_id) %>%
+    summarize(max_status = min(as.integer(status_label), na.rm = TRUE)) %>%
+    inner_join(females, by = "squirrel_id") %>%
+    arrange(max_status, tags, ln) %>%
+    mutate(id = row_number(),
+           label = reorder(label, id, max)) %>%
     select(id, squirrel_id, tags, colours, litter_number = ln,
+           locx, locy,
            trap_date = date, trap_status,
            nest_date, nest_status,
            status = status_label, completion, label) %>%
-    arrange(squirrel_id, litter_number)
+    arrange(squirrel_id, litter_number) %>%
+    mutate(litter_number = factor(litter_number, levels = 0:2,
+                                  labels = c("None", "1", "2")),
+           id = row_number())
 
   # skip plotting and return data frame instead
   if (data) {
@@ -148,11 +159,13 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
   # produce interactive bar chart
   # create interactive plot
   popup <- function(x) {
-    row <- females[x$id, ]
+    row <- females[females$id == x$id, ]
     paste(
       sprintf("<strong>Squirrel ID:</strong> %s", row$squirrel_id),
       sprintf("<strong>Tags:</strong> %s", row$tags),
       sprintf("<strong>Colours:</strong> %s", row$colours),
+      sprintf("<strong>LocX:</strong> %s; <strong>LocX:</strong> %s",
+              row$locx, row$locy),
       sprintf("<strong>Last Trapped:</strong> %s",
               format(row$trap_date, "%Y-%m-%d")),
       sprintf("<strong>Trapping Status:</strong> %s", row$trap_status),
