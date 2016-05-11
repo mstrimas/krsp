@@ -11,13 +11,13 @@ Depends:
 License: MIT + file LICENSE
 LazyData: true
 RoxygenNote: 5.0.1
-Imports: RMySQL,
-    assertthat,
+Imports: assertthat,
     ggvis,
     DBI,
     lubridate
 URL: https://github.com/mstrimas/krsp
 BugReports: https://github.com/mstrimas/krsp/issues
 Suggests: knitr,
-    rmarkdown
+    rmarkdown,
+    RMySQL
 VignetteBuilder: knitr

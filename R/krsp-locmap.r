@@ -116,6 +116,11 @@ krsp_locmap.krsp <- function(con, grid, year, from_date, to_date,
     return(results)
   }
 
+  # no results
+  if (nrow(results) == 0) {
+    stop("No results found.")
+  }
+
   # create interactive plot
   popup <- function(x) {
     row <- results[results$id == x$id, ]
