@@ -218,7 +218,7 @@ con <- krsp_connect(group = "krsp-aws")
 
 ## Querying the database
 
-Once you have created a connection to the database you can reference a table by name with `tbl()` command as follows:
+Once you have created a connection to the database you can reference a table by name with the `tbl()` command as follows:
 
 ```{r tbl}
 library(krsp)
@@ -250,6 +250,22 @@ collect(litter_size)
 ```
 
 Looks like JO is the winner.
+
+## But what about SQL?
+
+More comfortable with SQL than `dplyr`? Can't figure out how to convert a SQL query into R code? No worries, the `krsp` package has you covered. Use the function `krsp_sql()` to run a pure SQL query and get the results as a data frame. For example, we can calculate the number of squirrels per grid.
+
+```{r pure-sql}
+sql <- "
+  SELECT gr, COUNT(*) AS n_squirrels
+  FROM squirrel
+  GROUP BY gr 
+  ORDER BY n_squirrels DESC;
+  "
+krsp_sql(con, sql) %>% knitr::kable()
+```
+
+Note that `krsp_sql()` will only permit SELECT queries to avoid users accidentally changing the database.
 
 # Potential issues (**Important!**)
 

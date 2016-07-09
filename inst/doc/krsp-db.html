@@ -128,6 +128,7 @@ $(document).ready(function () {
 <li><a href="#working-with-the-krsp-database">Working with the KRSP database</a><ul>
 <li><a href="#connecting-to-the-database">Connecting to the database</a></li>
 <li><a href="#querying-the-database">Querying the database</a></li>
+<li><a href="#but-what-about-sql">But what about SQL?</a></li>
 </ul></li>
 <li><a href="#potential-issues-important">Potential issues (<strong>Important!</strong>)</a><ul>
 <li><a href="#laziness">Laziness</a></li>
@@ -398,7 +399,7 @@ database=krsp</code></pre>
 </div>
 <div id="querying-the-database" class="section level2">
 <h2>Querying the database</h2>
-<p>Once you have created a connection to the database you can reference a table by name with <code>tbl()</code> command as follows:</p>
+<p>Once you have created a connection to the database you can reference a table by name with the <code>tbl()</code> command as follows:</p>
 <pre class="r"><code>library(krsp)
 con &lt;- krsp_connect()
 (trapping &lt;- tbl(con, &quot;trapping&quot;))</code></pre>
@@ -461,6 +462,88 @@ collect(litter_size)</code></pre>
 ## 8    LL    3.3324
 ## 9    JO    3.4170</code></pre>
 <p>Looks like JO is the winner.</p>
+</div>
+<div id="but-what-about-sql" class="section level2">
+<h2>But what about SQL?</h2>
+<p>More comfortable with SQL than <code>dplyr</code>? Can’t figure out how to convert a SQL query into R code? No worries, the <code>krsp</code> package has you covered. Use the function <code>krsp_sql()</code> to run a pure SQL query and get the results as a data frame. For example, we can calculate the number of squirrels per grid.</p>
+<pre class="r"><code>sql &lt;- &quot;
+  SELECT gr, COUNT(*) AS n_squirrels
+  FROM squirrel
+  GROUP BY gr 
+  ORDER BY n_squirrels DESC;
+  &quot;
+krsp_sql(con, sql) %&gt;% knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">gr</th>
+<th align="right">n_squirrels</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">KL</td>
+<td align="right">3844</td>
+</tr>
+<tr class="even">
+<td align="left">AG</td>
+<td align="right">3709</td>
+</tr>
+<tr class="odd">
+<td align="left">LL</td>
+<td align="right">3406</td>
+</tr>
+<tr class="even">
+<td align="left">SU</td>
+<td align="right">3096</td>
+</tr>
+<tr class="odd">
+<td align="left">JO</td>
+<td align="right">2182</td>
+</tr>
+<tr class="even">
+<td align="left">CH</td>
+<td align="right">821</td>
+</tr>
+<tr class="odd">
+<td align="left">FL</td>
+<td align="right">468</td>
+</tr>
+<tr class="even">
+<td align="left">EN</td>
+<td align="right">308</td>
+</tr>
+<tr class="odd">
+<td align="left">SX</td>
+<td align="right">118</td>
+</tr>
+<tr class="even">
+<td align="left">BT</td>
+<td align="right">33</td>
+</tr>
+<tr class="odd">
+<td align="left">NA</td>
+<td align="right">27</td>
+</tr>
+<tr class="even">
+<td align="left">RR</td>
+<td align="right">13</td>
+</tr>
+<tr class="odd">
+<td align="left">UR</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="left">LR</td>
+<td align="right">8</td>
+</tr>
+<tr class="odd">
+<td align="left">UL</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+<p>Note that <code>krsp_sql()</code> will only permit SELECT queries to avoid users accidentally changing the database.</p>
 </div>
 </div>
 <div id="potential-issues-important" class="section level1">

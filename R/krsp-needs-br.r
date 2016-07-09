@@ -20,10 +20,11 @@ krsp_needs_br <- function(con, year) {
 
 #' @export
 krsp_needs_br.krsp <- function(con, year = current_year()) {
-  # assertions
-  assertthat::assert_that(is_integer(year),
-                         all(year >= 1984),
-                         all(year <= current_year()))
+  # assertions on arguments
+  assert_that(inherits(con, "src_mysql"),
+              is_integer(year),
+              all(year >= 1984),
+              all(year <= current_year()))
 
   year <- as.integer(year)
 
@@ -37,11 +38,11 @@ krsp_needs_br.krsp <- function(con, year = current_year()) {
   inner_join(litter, squirrel, by = c("squirrel_id" = "id")) %>%
     arrange(gr, trap_date) %>%
     select(gr,
-           id,
+           squirrel_id,
            colorlft, colorrt,
            taglft, tagrt,
            locx, locy,
            trap_date) %>%
     collect %>%
-    mutate(id = as.integer(id))
+    mutate(squirrel_id = as.integer(squirrel_id))
 }

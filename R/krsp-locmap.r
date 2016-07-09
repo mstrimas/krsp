@@ -38,11 +38,13 @@ krsp_locmap <- function(con, grid, year, from_date, to_date, data) {
 #' @export
 krsp_locmap.krsp <- function(con, grid, year, from_date, to_date,
                              data = FALSE) {
-  assertthat::assert_that(missing(year) || assertthat::is.count(year),
-                          missing(from_date) || length(from_date) == 1,
-                          missing(to_date) || length(to_date) == 1,
-                          length(grid) == 1,
-                          grid %in% valid_grids())
+  # assertions on arguments
+  assert_that(inherits(con, "src_mysql"),
+              missing(year) || assertthat::is.count(year),
+              missing(from_date) || length(from_date) == 1,
+              missing(to_date) || length(to_date) == 1,
+              length(grid) == 1,
+              grid %in% valid_grids())
   # convert dates
   if (!missing(from_date)) {
     from_date <- suppressWarnings(as.Date(lubridate::ymd(from_date)))

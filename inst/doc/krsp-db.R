@@ -86,6 +86,15 @@ litter_size <- inner_join(litter, juvenile, by = c("id" = "litter_id")) %>%
   arrange(mean_size)
 collect(litter_size)
 
+## ----pure-sql------------------------------------------------------------
+sql <- "
+  SELECT gr, COUNT(*) AS n_squirrels
+  FROM squirrel
+  GROUP BY gr 
+  ORDER BY n_squirrels DESC;
+  "
+krsp_sql(con, sql) %>% knitr::kable()
+
 ## ----error, error=TRUE---------------------------------------------------
 third <- trapping %>% 
   filter(gr == "JO") %>% 

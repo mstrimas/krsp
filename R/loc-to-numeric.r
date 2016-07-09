@@ -9,7 +9,8 @@
 #' @examples
 #' loc_to_numeric(c("A.1", "T.5", "-1.1", "5.0"))
 loc_to_numeric <- function(x) {
-  assertthat::assert_that(is.character(x))
+  # assertions on arguments
+  assert_that(is.character(x))
   x <- toupper(gsub('[[:space:]]', '', x))
   x <- ifelse(check_loc(x), x, NA)
   for (i in 1:26) {

@@ -9,6 +9,7 @@
 #' @name krsp
 #' @docType package
 #' @import dplyr
+#' @importFrom assertthat assert_that
 NULL
 
 # R CMD check doesn't like %>%, this fix deals with that

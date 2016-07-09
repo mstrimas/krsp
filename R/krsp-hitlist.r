@@ -22,10 +22,11 @@ krsp_hitlist <- function(con, year) {
 
 #' @export
 krsp_hitlist.krsp <- function(con, year = current_year()) {
-  # assertions
-  assertthat::assert_that(assertthat::is.count(year),
-                          all(year >= 1984),
-                          all(year <= current_year()))
+  # assertions on arguments
+  assert_that(inherits(con, "src_mysql"),
+              assertthat::is.count(year),
+              all(year >= 1984),
+              all(year <= current_year()))
 
   year <- as.integer(year)
   aug_start <- paste0(year - 1, "-08-01")
