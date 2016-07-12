@@ -22,19 +22,24 @@ krsp_needs_br <- function(con, year) {
 krsp_needs_br.krsp <- function(con, year = current_year()) {
   # assertions on arguments
   assert_that(inherits(con, "src_mysql"),
-              is_integer(year),
-              all(year >= 1984),
-              all(year <= current_year()))
+              valid_year(year))
 
   year <- as.integer(year)
 
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     litter <- tbl(con, "litter") %>%
-      filter(is.null(br), yr == year) %>%
       select(squirrel_id, br, yr)
     squirrel <- tbl(con, "squirrel")
   })
+
+  # if-statment required due to dplyr bug with filter and %in%
+  if (length(year) == 1) {
+    litter <- filter(litter, is.null(br), yr == year)
+  } else {
+    litter <- filter(litter, is.null(br), yr %in% year)
+  }
+
   inner_join(litter, squirrel, by = c("squirrel_id" = "id")) %>%
     arrange(gr, trap_date) %>%
     select(gr,

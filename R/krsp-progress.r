@@ -35,11 +35,8 @@ krsp_progress <- function(con, grid, year, data) {
 krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
   # assertions on arguments
   assert_that(inherits(con, "src_mysql"),
-              assertthat::is.count(year),
-              all(year >= 1984),
-              all(year <= current_year()),
-              length(grid) == 1,
-              grid %in% valid_grids())
+              valid_year(year, single = TRUE),
+              valid_grid(grid, single = TRUE))
 
   year <- as.integer(year)
   grid_choice <- grid

@@ -11,6 +11,6 @@ from
 	behaviour
 where
 	behaviour NOT IN (0,1,2,3,7,8,9,12,15,18)
-	and detail IS NOT NULL
+	and NOT (detail IS NULL or detail = 0)
 order by
 	grid, behaviour;

@@ -6,18 +6,22 @@
 #' mouseover. Plotting is done using \code{ggvis}, which creates an HTML object
 #' that pops up in the Viewer pane in RStudio.
 #'
-#' Records can be further filtered to a date range using \code{from_date} and
-#' \code{to_date} arguments. If both dates are provided, they must be in the
-#' same year, and \code{year} is ignored. If one of the two is provided it must
-#' be in the same year as the \code{year} argument.
+#' Records can be further filtered to a date range using the \code{date_range}
+#' arguments, which is a vector of the from and to dates, respectively, both of
+#' which must be in the same year. If \code{date_range} is provided is ignored.
 #'
 #' @param con Connection to KRSP database
 #' @param grid character; a single grid to map
 #' @param year integer
-#' @param from_date Date object or character representation of date in YMD format
-#'   (e.g. "2016-05-25"); only show records that are on or after this date
-#' @param to_date Date object or character representation of date in YMD format
-#'   (e.g. "2016-05-25"); only show records that are on or before this date
+#' @param date_range vector of starting and ending dates as Date objects or
+#'   character representation of date in YMD format (e.g. "2016-05-25"); only
+#'   show records that are between these dates.
+#' @param locx_range vector of length 2 giving upper and lower bounds of x locs,
+#'   either as character (e.g. \code{c("A", "H.5")}) or numeric (e.g.
+#'   \code{5.5, 10}).
+#' @param locy_range vector of length 2 giving upper and lower bounds of y locs,
+#'   either as character (e.g. \code{c("5", "10.5")}) or numeric (e.g.
+#'   \code{5, 10.5}).
 #' @param data logical; if TRUE return data frame instead of plotting
 #'
 #' @return Displays and returns a \code{ggvis} plot of rattle locations, unless
@@ -29,46 +33,51 @@
 #' krsp_locmap(con, "JO", 2014, data = TRUE) %>%
 #'   head
 #' krsp_locmap(con, "KL", 2015)
-#' krsp_locmap(con, "SU", 2014, from_date = "2014-04-01")
-#' krsp_locmap(con, "AG", from_date = "2014-04-01", to_date = "2014-04-30")
-krsp_locmap <- function(con, grid, year, from_date, to_date, data) {
+#' # choose date range
+#' krsp_locmap(con, "AG", date_range = c("2014-04-01", "2014-04-10"))
+#' # choose loc range
+#' krsp_locmap(con, "JO", 2010, locx_range = c("D", "H"), locy_range = c(5, 10))
+krsp_locmap <- function(con, grid, year, date_range, locx_range, locy_range,
+                        data) {
   UseMethod("krsp_locmap")
 }
 
 #' @export
-krsp_locmap.krsp <- function(con, grid, year, from_date, to_date,
-                             data = FALSE) {
+krsp_locmap.krsp <- function(con, grid, year, date_range, locx_range,
+                             locy_range, data = FALSE) {
   # assertions on arguments
   assert_that(inherits(con, "src_mysql"),
-              missing(year) || assertthat::is.count(year),
-              missing(from_date) || length(from_date) == 1,
-              missing(to_date) || length(to_date) == 1,
-              length(grid) == 1,
-              grid %in% valid_grids())
+              missing(year) || valid_year(year, single = TRUE),
+              missing(date_range) || length(date_range) == 2,
+              missing(locx_range) || length(locx_range) == 2,
+              missing(locy_range) || length(locy_range) == 2,
+              valid_grid(grid, single = TRUE))
   # convert dates
-  if (!missing(from_date)) {
-    from_date <- suppressWarnings(as.Date(lubridate::ymd(from_date)))
-    assertthat::assert_that(!is.na(from_date))
-  }
-  if (!missing(to_date)) {
-    to_date <- suppressWarnings(as.Date(lubridate::ymd(to_date)))
-    assertthat::assert_that(!is.na(to_date))
-  }
-
-  # handle various permutations of provided dates and year
-  if (missing(from_date) && missing(to_date)) {
-    assertthat::assert_that(assertthat::is.count(year))
-  } else if (!missing(from_date) && !missing(to_date)) {
+  if (!missing(date_range)) {
+    from_date <- suppressWarnings(as.Date(lubridate::ymd(date_range[1])))
+    to_date <- suppressWarnings(as.Date(lubridate::ymd(date_range[2])))
+    assert_that(!is.na(from_date))
+    assert_that(!is.na(to_date))
+    # set year for filtering
     year <- lubridate::year(from_date)
-    assertthat::assert_that(lubridate::year(to_date) == year)
-  } else if (!missing(from_date) && missing(to_date)) {
-    assertthat::assert_that(lubridate::year(from_date) == year)
-  } else if (missing(from_date) && !missing(to_date)) {
-    assertthat::assert_that(lubridate::year(to_date) == year)
+    # from and to dates must be of same year
+    assert_that(lubridate::year(to_date) == year)
   }
-  assertthat::assert_that(assertthat::is.count(year),
-                          all(year >= 1984),
-                          all(year <= current_year()))
+  assert_that(valid_year(year, single = TRUE))
+
+  # check loc ranges if provided
+  if (!missing(locx_range)) {
+    assert_that(valid_loc(locx_range[1]),
+                valid_loc(locx_range[2]))
+    locx_range <- loc_to_numeric(locx_range)
+    assert_that(locx_range[1] < locx_range[2])
+  }
+  if (!missing(locy_range)) {
+    assert_that(valid_loc(locy_range[1]),
+                valid_loc(locy_range[2]))
+    locx_range <- loc_to_numeric(locy_range)
+    assert_that(locy_range[1] < locy_range[2])
+  }
 
   year <- as.integer(year)
   grid_choice <- grid
@@ -84,11 +93,19 @@ krsp_locmap.krsp <- function(con, grid, year, from_date, to_date,
              behaviour == 2L,
              detail == 1L) %>%
       select(squirrel_id, grid, locx, locy, date)
+    trapping <- tbl(con, "trapping") %>%
+      filter(gr == grid_choice,
+             year(date) == year,
+             rattle == "R") %>%
+      select(squirrel_id, grid = gr, locx, locy, date)
     squirrel <- tbl(con, "squirrel") %>%
       select(id, sex, colorlft, colorrt, taglft, tagrt, trap_date)
   })
-  results <- inner_join(behaviour, squirrel, by = c("squirrel_id" = "id")) %>%
+  results_b <- inner_join(behaviour, squirrel, by = c("squirrel_id" = "id")) %>%
     collect
+  results_t <- inner_join(trapping, squirrel, by = c("squirrel_id" = "id")) %>%
+    collect
+  results <- bind_rows(results_t, results_b)
   # full list of rattles and corresponding squirrel info
   results <- mutate(results,
                     squirrel_id = as.integer(squirrel_id),
@@ -106,11 +123,15 @@ krsp_locmap.krsp <- function(con, grid, year, from_date, to_date,
     select(id, squirrel_id, x, y, grid, sex, colours, tags, date, trap_date)
 
   # date filtering
-  if (!missing(from_date)) {
-    results <- filter(results, date >= from_date)
+  if (!missing(date_range)) {
+    results <- filter(results, date >= from_date, date <= to_date)
   }
-  if (!missing(to_date)) {
-    results <- filter(results, date <= to_date)
+  # loc filtering
+  if (!missing(locx_range)) {
+    results <- filter(results, x >= locx_range[1], x <= locx_range[2])
+  }
+  if (!missing(locy_range)) {
+    results <- filter(results, y >= locy_range[1], y <= locy_range[2])
   }
 
   # skip plotting and return data frame instead

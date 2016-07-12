@@ -4,7 +4,7 @@
 \alias{krsp_locmap}
 \title{Map behaviour records on grid}
 \usage{
-krsp_locmap(con, grid, year, from_date, to_date, data)
+krsp_locmap(con, grid, year, date_range, locx_range, locy_range, data)
 }
 \arguments{
 \item{con}{Connection to KRSP database}
@@ -13,11 +13,17 @@ krsp_locmap(con, grid, year, from_date, to_date, data)
 
 \item{year}{integer}
 
-\item{from_date}{Date object or character representation of date in YMD format
-(e.g. "2016-05-25"); only show records that are on or after this date}
+\item{date_range}{vector of starting and ending dates as Date objects or
+character representation of date in YMD format (e.g. "2016-05-25"); only
+show records that are between these dates.}
 
-\item{to_date}{Date object or character representation of date in YMD format
-(e.g. "2016-05-25"); only show records that are on or before this date}
+\item{locx_range}{vector of length 2 giving upper and lower bounds of x locs,
+either as character (e.g. \code{c("A", "H.5")}) or numeric (e.g.
+\code{5.5, 10}).}
+
+\item{locy_range}{vector of length 2 giving upper and lower bounds of y locs,
+either as character (e.g. \code{c("5", "10.5")}) or numeric (e.g.
+\code{5, 10.5}).}
 
 \item{data}{logical; if TRUE return data frame instead of plotting}
 }
@@ -34,17 +40,18 @@ mouseover. Plotting is done using \code{ggvis}, which creates an HTML object
 that pops up in the Viewer pane in RStudio.
 }
 \details{
-Records can be further filtered to a date range using \code{from_date} and
-\code{to_date} arguments. If both dates are provided, they must be in the
-same year, and \code{year} is ignored. If one of the two is provided it must
-be in the same year as the \code{year} argument.
+Records can be further filtered to a date range using the \code{date_range}
+arguments, which is a vector of the from and to dates, respectively, both of
+which must be in the same year. If \code{date_range} is provided is ignored.
 }
 \examples{
 con <- krsp_connect()
 krsp_locmap(con, "JO", 2014, data = TRUE) \%>\%
   head
 krsp_locmap(con, "KL", 2015)
-krsp_locmap(con, "SU", 2014, from_date = "2014-04-01")
-krsp_locmap(con, "AG", from_date = "2014-04-01", to_date = "2014-04-30")
+# choose date range
+krsp_locmap(con, "AG", date_range = c("2014-04-01", "2014-04-10"))
+# choose loc range
+krsp_locmap(con, "JO", 2010, locx_range = c("D", "H"), locy_range = c(5, 10))
 }
 
