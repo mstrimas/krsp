@@ -46,9 +46,13 @@ check_behaviour.krsp <- function(con, grid, year, observer) {
               missing(grid) || valid_grid(grid),
               missing(year) || valid_year(year),
               missing(observer) || is.character(observer),
-              missing(observer) || all(nchar(observer) <= 3),
-              # must have at least one filtering criterion
-              !(missing(grid) && missing(year) && missing(observer)))
+              missing(observer) || all(nchar(observer) <= 3))
+
+  # must have at least one filtering criterion
+  if (missing(grid) && missing(year) && missing(observer)) {
+    message("No filtering criteria supplied, defaulting to current year.")
+    year <- current_year()
+  }
 
   # run individual checks
   loc_check <- check_behaviour_locs(con, grid, year, observer)
@@ -79,9 +83,14 @@ check_behaviour_locs.krsp <- function(con, grid, year, observer) {
               missing(grid) || valid_grid(grid),
               missing(year) || valid_year(year),
               missing(observer) || is.character(observer),
-              missing(observer) || all(nchar(observer) <= 3),
-              # must have at least one filtering criterion
-              !(missing(grid) && missing(year) && missing(observer)))
+              missing(observer) || all(nchar(observer) <= 3))
+
+  # must have at least one filtering criterion
+  if (missing(grid) && missing(year) && missing(observer)) {
+    message("No filtering criteria supplied, defaulting to current year.")
+    year <- current_year()
+  }
+
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     behaviour <- tbl(con, "behaviour") %>%
@@ -136,6 +145,9 @@ check_behaviour_locs.krsp <- function(con, grid, year, observer) {
             "squirrel_id", "colours", "tags") %>%
     arrange_("grid", "year", "observer", "date")
   attr(results, "check") <- "check_behaviour_locs"
+  if (nrow(results) == 0) {
+    message("check_behaviour_locs: no errors found.")
+  }
   return(results)
 }
 
@@ -152,9 +164,14 @@ check_behaviour_mode.krsp <- function(con, grid, year, observer) {
               missing(grid) || valid_grid(grid),
               missing(year) || valid_year(year),
               missing(observer) || is.character(observer),
-              missing(observer) || all(nchar(observer) <= 3),
-              # must have at least one filtering criterion
-              !(missing(grid) && missing(year) && missing(observer)))
+              missing(observer) || all(nchar(observer) <= 3))
+
+  # must have at least one filtering criterion
+  if (missing(grid) && missing(year) && missing(observer)) {
+    message("No filtering criteria supplied, defaulting to current year.")
+    year <- current_year()
+  }
+
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     behaviour <- tbl(con, "behaviour") %>%
@@ -209,6 +226,9 @@ check_behaviour_mode.krsp <- function(con, grid, year, observer) {
             "squirrel_id", "colours", "tags") %>%
     arrange_("grid", "year", "observer", "date")
   attr(results, "check") <- "check_behaviour_mode"
+  if (nrow(results) == 0) {
+    message("check_behaviour_mode: no errors found.")
+  }
   return(results)
 }
 #' @export
@@ -224,9 +244,14 @@ check_behaviour_time.krsp <- function(con, grid, year, observer) {
               missing(grid) || valid_grid(grid),
               missing(year) || valid_year(year),
               missing(observer) || is.character(observer),
-              missing(observer) || all(nchar(observer) <= 3),
-              # must have at least one filtering criterion
-              !(missing(grid) && missing(year) && missing(observer)))
+              missing(observer) || all(nchar(observer) <= 3))
+
+  # must have at least one filtering criterion
+  if (missing(grid) && missing(year) && missing(observer)) {
+    message("No filtering criteria supplied, defaulting to current year.")
+    year <- current_year()
+  }
+
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     behaviour <- tbl(con, "behaviour") %>%
@@ -285,17 +310,8 @@ check_behaviour_time.krsp <- function(con, grid, year, observer) {
             "squirrel_id", "colours", "tags") %>%
     arrange_("grid", "year", "observer", "date")
   attr(results, "check") <- "check_behaviour_time"
+  if (nrow(results) == 0) {
+    message("check_behaviour_time: no errors found.")
+  }
   return(results)
 }
-
-
-
-a <- function(x, y, ...) {
-  x + y
-}
-
-b <- function(x, y, ...) {
-  a(x, y, ...)
-}
-
-b(1, 2, z = 1)
