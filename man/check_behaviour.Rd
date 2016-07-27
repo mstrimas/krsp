@@ -2,14 +2,14 @@
 % Please edit documentation in R/check-behaviour.r
 \name{check_behaviour}
 \alias{check_behaviour}
-\alias{check_behaviour_locs}
+\alias{check_behaviour_loc}
 \alias{check_behaviour_mode}
 \alias{check_behaviour_time}
 \title{Check records in behaviour table}
 \usage{
 check_behaviour(con, grid, year, observer)
 
-check_behaviour_locs(con, grid, year, observer)
+check_behaviour_loc(con, grid, year, observer)
 
 check_behaviour_mode(con, grid, year, observer)
 
@@ -40,7 +40,7 @@ functions outlined below.
 The following checks have been implemented:
 
 \itemize{
-  \item \code{check_behaviour_locs}: all locs should conform to the standard
+  \item \code{check_behaviour_loc}: all locs should conform to the standard
     format, e.g. A.1, 22.1, or -1.8.
   \item \code{check_behaviour_mode}: the \code{mode} of the observation, i.e.
     how it was taken, should never be empty.
@@ -53,7 +53,7 @@ The following checks have been implemented:
 con <- krsp_connect()
 # run individual checks
 check_behaviour_time(con, grid = "AG", year = 2013)
-check_behaviour_locs(con, grid = c("AG", "JO"), observer = "MES")
+check_behaviour_loc(con, grid = c("AG", "JO"), observer = "MES")
 check_behaviour_mode(con, year = 2010:2012)
 # or perform them all at once
 check_behaviour(con, grid = "JO", year = 2012)

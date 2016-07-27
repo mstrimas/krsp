@@ -16,7 +16,7 @@
 #' The following checks have been implemented:
 #'
 #' \itemize{
-#'   \item \code{check_behaviour_locs}: all locs should conform to the standard
+#'   \item \code{check_behaviour_loc}: all locs should conform to the standard
 #'     format, e.g. A.1, 22.1, or -1.8.
 #'   \item \code{check_behaviour_mode}: the \code{mode} of the observation, i.e.
 #'     how it was taken, should never be empty.
@@ -31,7 +31,7 @@
 #' con <- krsp_connect()
 #' # run individual checks
 #' check_behaviour_time(con, grid = "AG", year = 2013)
-#' check_behaviour_locs(con, grid = c("AG", "JO"), observer = "MES")
+#' check_behaviour_loc(con, grid = c("AG", "JO"), observer = "MES")
 #' check_behaviour_mode(con, year = 2010:2012)
 #' # or perform them all at once
 #' check_behaviour(con, grid = "JO", year = 2012)
@@ -55,7 +55,7 @@ check_behaviour.krsp <- function(con, grid, year, observer) {
   }
 
   # run individual checks
-  loc_check <- check_behaviour_locs(con, grid, year, observer)
+  loc_check <- check_behaviour_loc(con, grid, year, observer)
   mode_check <- check_behaviour_mode(con, grid, year, observer)
   time_check <- check_behaviour_time(con, grid, year, observer)
 
@@ -72,12 +72,12 @@ check_behaviour.krsp <- function(con, grid, year, observer) {
 
 #' @export
 #' @rdname check_behaviour
-check_behaviour_locs <- function(con, grid, year, observer) {
-  UseMethod("check_behaviour_locs")
+check_behaviour_loc <- function(con, grid, year, observer) {
+  UseMethod("check_behaviour_loc")
 }
 
 #' @export
-check_behaviour_locs.krsp <- function(con, grid, year, observer) {
+check_behaviour_loc.krsp <- function(con, grid, year, observer) {
   # assertion on arguments
   assert_that(inherits(con, "src_mysql"),
               missing(grid) || valid_grid(grid),
@@ -144,9 +144,9 @@ check_behaviour_locs.krsp <- function(con, grid, year, observer) {
             "locx", "locy",
             "squirrel_id", "colours", "tags") %>%
     arrange_("grid", "year", "observer", "date")
-  attr(results, "check") <- "check_behaviour_locs"
+  attr(results, "check") <- "check_behaviour_loc"
   if (nrow(results) == 0) {
-    message("check_behaviour_locs: no errors found.")
+    message("check_behaviour_loc: no errors found.")
   }
   return(results)
 }

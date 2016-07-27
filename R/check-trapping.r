@@ -20,7 +20,7 @@
 #' The following checks have been implemented:
 #'
 #' \itemize{
-#'   \item \code{check_trapping_locs}: all locs should conform to the standard
+#'   \item \code{check_trapping_loc}: all locs should conform to the standard
 #'     format for reflos, e.g. A.5, 22.0, or -1.5. Use \code{reflo = FALSE} to
 #'     allow any valid loc instead of just reflos.
 #'   \item \code{check_trapping_colours}: check for valid colours.
@@ -50,8 +50,8 @@
 #' @examples
 #' con <- krsp_connect()
 #' # run individual checks
-#' check_trapping_locs(con, grid = "AG", year = 2015)
-#' check_trapping_locs(con, grid = "AG", year = 2015, reflo = FALSE)
+#' check_trapping_loc(con, grid = "AG", year = 2015)
+#' check_trapping_loc(con, grid = "AG", year = 2015, reflo = FALSE)
 #' check_trapping_colours(con, grid = "JO", year = 2011)
 #' check_trapping_tags(con, year = 2014)
 #' check_trapping_weight(con, grid = "SU", year = 2013)
@@ -82,7 +82,7 @@ check_trapping.krsp <- function(con, grid, year, observer) {
   }
 
   # run individual checks
-  loc_check <- check_trapping_locs(con, grid, year, observer)
+  loc_check <- check_trapping_loc(con, grid, year, observer)
   colour_check <- check_trapping_colours(con, grid, year, observer)
   tag_check <- check_trapping_tags(con, grid, year, observer)
   weight_check <- check_trapping_weight(con, grid, year, observer)
@@ -120,12 +120,12 @@ check_trapping.krsp <- function(con, grid, year, observer) {
 
 #' @export
 #' @rdname check_trapping
-check_trapping_locs <- function(con, grid, year, observer, reflo = TRUE) {
-  UseMethod("check_trapping_locs")
+check_trapping_loc <- function(con, grid, year, observer, reflo = TRUE) {
+  UseMethod("check_trapping_loc")
 }
 
 #' @export
-check_trapping_locs.krsp <- function(con, grid, year, observer, reflo = TRUE) {
+check_trapping_loc.krsp <- function(con, grid, year, observer, reflo = TRUE) {
   # assertion on arguments
   assert_that(inherits(con, "src_mysql"),
               missing(grid) || valid_grid(grid),
@@ -202,9 +202,9 @@ check_trapping_locs.krsp <- function(con, grid, year, observer, reflo = TRUE) {
             "dna1", "dna2",
             "comments") %>%
     arrange_("grid", "year", "observer", "date")
-  attr(results, "check") <- "check_trapping_locs"
+  attr(results, "check") <- "check_trapping_loc"
   if (nrow(results) == 0) {
-    message("check_trapping_locs: no errors found.")
+    message("check_trapping_loc: no errors found.")
   }
   return(results)
 }
@@ -418,7 +418,8 @@ check_trapping_weight.krsp <- function(con, grid, year, observer,
               missing(grid) || valid_grid(grid),
               missing(year) || valid_year(year),
               missing(observer) || is.character(observer),
-              missing(observer) || all(nchar(observer) <= 3))
+              missing(observer) || all(nchar(observer) <= 3),
+              assertthat::is.flag(missing_wt))
 
   # must have at least one filtering criterion
   if (missing(grid) && missing(year) && missing(observer)) {
