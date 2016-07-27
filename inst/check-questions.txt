@@ -1,5 +1,0 @@
-Check questions
-
-Behaviour:
-Should missing (NA/NULL) locs be flagged?
-Is the ".0" required, e.g. should "A" or "10" be flagged or do we just assume they're "A.0" and "10.0"?
