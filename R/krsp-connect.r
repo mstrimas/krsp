@@ -18,7 +18,7 @@
 #' @param group character; my.cnf option group
 #' @param ... Additional arguments passed on to \code{\link[dplyr]{src_mysql}}.
 #'
-#' @return A character vector of table names
+#' @return A connection to the krsp database for use with \code{dplyr}.
 #' @export
 #' @examples
 #' con <- krsp_connect()

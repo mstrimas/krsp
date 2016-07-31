@@ -11,7 +11,7 @@ year_list <- function(con) {
   years <- NULL
   if (!missing(con)) {
     sql <- "
-    SELECT DISTINCT YEAR(date)
+    SELECT DISTINCT YEAR(date) AS year
     FROM trapping
     WHERE date IS NOT NULL;
     "

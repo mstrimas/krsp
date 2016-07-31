@@ -23,7 +23,7 @@ supplied.}
 \item{...}{Additional arguments passed on to \code{\link[dplyr]{src_mysql}}.}
 }
 \value{
-A character vector of table names
+A connection to the krsp database for use with \code{dplyr}.
 }
 \description{
 \code{krsp_connect} is a wrapper for \code{\link[dplyr]{src_mysql}} that

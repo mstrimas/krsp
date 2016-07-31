@@ -16,8 +16,8 @@ A tbl of squirrels, including their IDs and identifying
    information. Can be converted to a data.frame.
 }
 \description{
-Identify female squirrels who are missing a breeding status (\code{br} is the
-\code{litter} table) in the given year. Note that all squirrels should have
+Identify female squirrels who are missing a breeding status (\code{br} in the
+\code{litter} table) in the given year. Note that all squirrels should
 appear in the litter table and have a breeding status even if they did not
 breed in a given year.
 }
