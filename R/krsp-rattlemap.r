@@ -30,21 +30,22 @@
 #' @export
 #' @examples
 #' con <- krsp_connect()
-#' krsp_locmap(con, "JO", 2014, data = TRUE) %>%
+#' krsp_rattlemap(con, "JO", 2014, data = TRUE) %>%
 #'   head
-#' krsp_locmap(con, "KL", 2015)
+#' krsp_rattlemap(con, "KL", 2015)
 #' # choose date range
-#' krsp_locmap(con, "AG", date_range = c("2014-04-01", "2014-04-10"))
+#' krsp_rattlemap(con, "AG", date_range = c("2014-04-01", "2014-04-10"))
 #' # choose loc range
-#' krsp_locmap(con, "JO", 2010, locx_range = c("D", "H"), locy_range = c(5, 10))
-krsp_locmap <- function(con, grid, year, date_range, locx_range, locy_range,
-                        data) {
-  UseMethod("krsp_locmap")
+#' krsp_rattlemap(con, "JO", 2010, locx_range = c("D", "H"),
+#'   locy_range = c(5, 10))
+krsp_rattlemap <- function(con, grid, year, date_range, locx_range, locy_range,
+                           data) {
+  UseMethod("krsp_rattlemap")
 }
 
 #' @export
-krsp_locmap.krsp <- function(con, grid, year, date_range, locx_range,
-                             locy_range, data = FALSE) {
+krsp_rattlemap.krsp <- function(con, grid, year, date_range, locx_range,
+                                locy_range, data = FALSE) {
   # assertions on arguments
   assert_that(inherits(con, "src_mysql"),
               missing(year) || valid_year(year, single = TRUE),
@@ -117,7 +118,9 @@ krsp_locmap.krsp <- function(con, grid, year, date_range, locx_range,
                     taglft = ifelse(is.na(taglft), "-", taglft),
                     tagrt = ifelse(is.na(tagrt), "-", tagrt),
                     colours = paste(colorlft, colorrt, sep = "/"),
-                    tags = paste(taglft, tagrt, sep = "/")) %>%
+                    tags = paste(taglft, tagrt, sep = "/"),
+                    sex = factor(coalesce(sex, "?"),
+                                 levels = c("F", "M", "?"))) %>%
     filter(!is.na(x), !is.na(y)) %>%
     mutate(id = row_number()) %>%
     select(id, squirrel_id, x, y, grid, sex, colours, tags, date, trap_date)
@@ -134,19 +137,22 @@ krsp_locmap.krsp <- function(con, grid, year, date_range, locx_range,
     results <- filter(results, y >= locy_range[1], y <= locy_range[2])
   }
 
-  # skip plotting and return data frame instead
+  # either return data frame or interactive map of rattles
   if (data) {
     return(results)
+  } else {
+    return(plot_rattles(results, reverse_grid))
   }
+}
 
+plot_rattles <- function(rattles, reverse_grid = FALSE) {
   # no results
-  if (nrow(results) == 0) {
-    stop("No results found.")
+  if (nrow(rattles) == 0) {
+    return("No rattles found.")
   }
-
   # create interactive plot
   popup <- function(x) {
-    row <- results[results$id == x$id, ]
+    row <- rattles[rattles$id == x$id, ]
     paste(
       sprintf("<strong>Date:</strong> %s", row$date),
       sprintf("<strong>Colours:</strong> %s", row$colours),
@@ -155,20 +161,20 @@ krsp_locmap.krsp <- function(con, grid, year, date_range, locx_range,
       sep = "<br />")
   }
   fnt <- c("Helvetica Neue", "sans-serif")
-  x_ticks <- floor(min(results$x)):ceiling(max(results$x))
-  y_ticks <- floor(min(results$y)):ceiling(max(results$y))
+  x_ticks <- floor(min(rattles$x)):ceiling(max(rattles$x))
+  y_ticks <- floor(min(rattles$y)):ceiling(max(rattles$y))
   # letter labels for x-axis
   x_labels <- data_frame(x = x_ticks + ifelse(reverse_grid, 0.2, -0.2),
-                         y = ceiling(max(results$y)),
+                         y = ceiling(max(rattles$y)),
                          label = sapply(x_ticks, function(i) {
                            ifelse(i > 0 & i <= 26, LETTERS[i], i)
                          })
-                         )
-  g <- ggvis::ggvis(results, ~x, ~y) %>%
+  )
+  g <- ggvis::ggvis(rattles, ~x, ~y) %>%
     ggvis::layer_points(fill = ~factor(squirrel_id), shape = ~sex,
                         key := ~id, opacity := 0.7) %>%
     # assign shapes to sexes
-    ggvis::scale_nominal("shape", range = c("circle", "square")) %>%
+    ggvis::scale_nominal("shape", range = c("circle", "square", "diamond")) %>%
     # labels for x loc letters
     ggvis::layer_text(~x, ~y, text := ~label,
                       fontSize := 14, fontWeight := "bold",
@@ -181,7 +187,7 @@ krsp_locmap.krsp <- function(con, grid, year, date_range, locx_range,
                     )) %>%
     # dummy x-axis for title
     ggvis::add_axis("x", orient = "top", ticks = 0,
-                    title = sprintf("Rattles on %s in %i", grid, year),
+                    title = "", #sprintf("Rattles on %s in %i", grid, year),
                     properties = ggvis::axis_props(
                       labels = list(fontSize = 0),
                       title = list(fontSize = 24, font = fnt))) %>%
@@ -202,11 +208,11 @@ krsp_locmap.krsp <- function(con, grid, year, date_range, locx_range,
     ggvis::hide_legend("fill") %>%
     # visualize sex with different symbols
     ggvis::add_legend("shape", title = "Sex",
-               properties = ggvis::legend_props(
-                 title = list(fontSize = 20, font = fnt),
-                 labels = list(fontSize = 16, font = fnt),
-                 symbols = list(fill = "black", stroke = "black", size = 100)
-               )) %>%
+                      properties = ggvis::legend_props(
+                        title = list(fontSize = 20, font = fnt),
+                        labels = list(fontSize = 16, font = fnt),
+                        symbols = list(fill = "black", stroke = "black", size = 100)
+                      )) %>%
     # popup tooltips with additional information
     ggvis::add_tooltip(popup) %>%
     ggvis::set_options(height = 650, width = 900)
