@@ -1,6 +1,6 @@
 Package: krsp
 Title: Working with the Kluane Red Squirrel Project Database
-Version: 0.0.0.903
+Version: 0.0.0.904
 Authors@R: "Matthew Strimas-Mackey <mstrimas@gmail.com> [aut,cre]"
 Description: This package is designed to help user bring data from the KRSP
     database into R. In addition, common database queries are standardized as R
