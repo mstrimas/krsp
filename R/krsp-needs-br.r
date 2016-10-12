@@ -35,9 +35,9 @@ krsp_needs_br.krsp <- function(con, year = current_year()) {
 
   # if-statment required due to dplyr bug with filter and %in%
   if (length(year) == 1) {
-    litter <- filter(litter, is.null(br), yr == year)
+    litter <- filter_(litter, ~ is.null(br), ~ yr == year)
   } else {
-    litter <- filter(litter, is.null(br), yr %in% year)
+    litter <- filter_(litter, ~ is.null(br), ~ yr %in% year)
   }
 
   inner_join(litter, squirrel, by = c("squirrel_id" = "id")) %>%

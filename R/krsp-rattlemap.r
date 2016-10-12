@@ -84,57 +84,79 @@ krsp_rattlemap.krsp <- function(con, grid, year, date_range, locx_range,
   grid_choice <- grid
   reverse_grid <- (grid_choice == "AG")
 
+  # query for most recent trapping record
+  recent_query <- sprintf(
+    "SELECT
+      t.squirrel_id, t.date AS trap_date,
+      t.taglft, t.tagrt,
+      t.color_left, t.color_right,
+      s.sex
+    FROM
+      trapping t
+      INNER JOIN squirrel s
+        ON t.squirrel_id = s.id
+    WHERE
+      s.gr IN (%s) AND
+      (t.squirrel_id, t.date) IN (
+        SELECT squirrel_id, MAX(date) as max_date
+        FROM trapping
+        WHERE YEAR(date) = %i
+        GROUP BY squirrel_id);",
+    paste0("'", paste(grid, collapse = "','"), "'"), year)
+
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     # get necessary tables from database
     behaviour <- tbl(con, "behaviour") %>%
-      filter(grid == grid_choice,
-             year(date) == year,
-             mode %in% c(1L, 4L),
-             behaviour == 2L,
-             detail == 1L) %>%
-      select(squirrel_id, grid, locx, locy, date)
+      filter_(~ grid == grid_choice,
+              ~ year(date) == year,
+              ~ mode %in% c(1L, 4L),
+              ~ behaviour == 2L,
+              ~ detail == 1L) %>%
+      select_("squirrel_id", "grid", "locx", "locy", "date") %>%
+      collect()
     trapping <- tbl(con, "trapping") %>%
-      filter(gr == grid_choice,
-             year(date) == year,
-             rattle == "R") %>%
-      select(squirrel_id, grid = gr, locx, locy, date)
-    squirrel <- tbl(con, "squirrel") %>%
-      select(id, sex, colorlft, colorrt, taglft, tagrt, trap_date)
+      filter_(~ gr == grid_choice,
+              ~ year(date) == year,
+              ~ rattle == "R") %>%
+      select_("squirrel_id", grid = "gr", "locx", "locy", "date") %>%
+      collect()
+    recent <- krsp_sql(con, recent_query)
   })
-  results_b <- inner_join(behaviour, squirrel, by = c("squirrel_id" = "id")) %>%
-    collect
-  results_t <- inner_join(trapping, squirrel, by = c("squirrel_id" = "id")) %>%
-    collect
+  results_b <- inner_join(behaviour, recent, by = "squirrel_id")
+  results_t <- inner_join(trapping, recent, by = "squirrel_id")
   results <- bind_rows(results_t, results_b)
   # full list of rattles and corresponding squirrel info
-  results <- mutate(results,
-                    squirrel_id = as.integer(squirrel_id),
-                    x = loc_to_numeric(locx),
-                    y = suppressWarnings(round(as.numeric(locy), 1)),
-                    date = suppressWarnings(as.Date(lubridate::ymd(date))),
-                    colorlft = ifelse(is.na(colorlft), "-", colorlft),
-                    colorrt = ifelse(is.na(colorrt), "-", colorrt),
-                    taglft = ifelse(is.na(taglft), "-", taglft),
-                    tagrt = ifelse(is.na(tagrt), "-", tagrt),
-                    colours = paste(colorlft, colorrt, sep = "/"),
-                    tags = paste(taglft, tagrt, sep = "/"),
-                    sex = factor(coalesce(sex, "?"),
-                                 levels = c("F", "M", "?"))) %>%
-    filter(!is.na(x), !is.na(y)) %>%
-    mutate(id = row_number()) %>%
-    select(id, squirrel_id, x, y, grid, sex, colours, tags, date, trap_date)
+  results <- results %>%
+    mutate_(squirrel_id = ~ as.integer(squirrel_id),
+            x = ~ loc_to_numeric(locx),
+            y = ~ suppressWarnings(round(as.numeric(locy), 1)),
+            date = ~ suppressWarnings(as.Date(lubridate::ymd(date))),
+            color_left = ~ ifelse(is.na(color_left) | color_left == "",
+                                  "-", color_left),
+            color_right = ~ ifelse(is.na(color_right) | color_right == "",
+                                   "-", color_right),
+            taglft = ~ ifelse(is.na(taglft) | taglft == "", "-", taglft),
+            tagrt = ~ ifelse(is.na(tagrt) | tagrt == "", "-", tagrt),
+            colours = ~ paste(color_left, color_right, sep = "/"),
+            tags = ~ paste(taglft, tagrt, sep = "/"),
+            sex = ~ factor(coalesce(sex, "?"),
+                           levels = c("F", "M", "?"))) %>%
+    filter_(~ !is.na(x), ~ !is.na(y)) %>%
+    mutate_(id = ~ row_number()) %>%
+    select_("id", "squirrel_id", "x", "y", "grid", "sex",
+            "colours", "tags", "date", "trap_date")
 
   # date filtering
   if (!missing(date_range)) {
-    results <- filter(results, date >= from_date, date <= to_date)
+    results <- filter_(results, ~ date >= from_date, ~ date <= to_date)
   }
   # loc filtering
   if (!missing(locx_range)) {
-    results <- filter(results, x >= locx_range[1], x <= locx_range[2])
+    results <- filter_(results, ~ x >= locx_range[1], ~ x <= locx_range[2])
   }
   if (!missing(locy_range)) {
-    results <- filter(results, y >= locy_range[1], y <= locy_range[2])
+    results <- filter_(results, ~ y >= locy_range[1], ~ y <= locy_range[2])
   }
 
   # either return data frame or interactive map of rattles

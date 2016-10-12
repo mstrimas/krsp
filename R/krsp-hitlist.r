@@ -34,19 +34,19 @@ krsp_hitlist.krsp <- function(con, year = current_year()) {
   suppressWarnings({
     # get necessary tables from database
     census <- tbl(con, "census") %>%
-      filter(sex == "F",
-             census_date >= aug_start,
-             census_date <= aug_end) %>%
-      select(squirrel_id, gr, taglft, tagrt, reflo, locx, locy)
+      filter_(~ sex == "F",
+              ~ census_date >= aug_start,
+              ~ census_date <= aug_end) %>%
+      select_("squirrel_id", "gr", "taglft", "tagrt", "reflo", "locx", "locy")
     litter <- tbl(con, "litter") %>%
-      filter(yr == (year - 1), ln == 1, br != 0) %>%
-      mutate(part_date = coalesce(fieldbdate, date1, tagdt)) %>%
-      select(squirrel_id, part_date)
+      filter_(~ yr == (year - 1), ~ ln == 1, ~ br != 0) %>%
+      mutate_(part_date = ~ coalesce(fieldbdate, date1, tagdt)) %>%
+      select_("squirrel_id", "part_date")
   })
   left_join(census, litter, by = "squirrel_id") %>%
-    mutate(non_breeder = is.na(part_date)) %>%
-    arrange(non_breeder, part_date, gr, squirrel_id) %>%
-    collect %>%
-    mutate(squirrel_id = as.integer(squirrel_id)) %>%
-    select(-non_breeder)
+    mutate_(non_breeder = ~ is.na(part_date)) %>%
+    arrange_("non_breeder", "part_date", "gr", "squirrel_id") %>%
+    collect() %>%
+    mutate_(squirrel_id = ~ as.integer(squirrel_id)) %>%
+    select_(~ -non_breeder)
 }

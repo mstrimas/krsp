@@ -15,7 +15,10 @@ Imports: assertthat,
     ggvis,
     DBI,
     lubridate,
-    lazyeval
+    lazyeval,
+    DT,
+    htmlwidgets,
+    tidyr
 URL: https://github.com/mstrimas/krsp
 BugReports: https://github.com/mstrimas/krsp/issues
 Suggests: knitr,

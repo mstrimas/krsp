@@ -38,7 +38,7 @@ or P3 is assigned for rep_con = 1, 2, 3, 4, respectively.
 \examples{
 con <- krsp_connect()
 krsp_progress(con, "JO", 2015, data = TRUE) \%>\%
-  head
+  head()
 krsp_progress(con, "KL", 2011)
 }
 
