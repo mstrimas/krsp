@@ -44,7 +44,7 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
   # query for most recent trapping record
   female_query <- sprintf(
     "SELECT
-      t.id, t.squirrel_id, t.date,
+      t.squirrel_id, t.date,
       t.taglft, t.tagrt,
       t.color_left, t.color_right,
       t.locx, t.locy,
@@ -56,10 +56,11 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
     WHERE
       s.sex = 'F'
       AND s.gr = '%s'
+      AND t.rep_con IS NOT NULL
       AND (t.squirrel_id, t.date) IN (
         SELECT squirrel_id, MAX(date) as max_date
         FROM trapping
-        WHERE YEAR(date) = %i
+        WHERE YEAR(date) = %i AND rep_con IS NOT NULL
         GROUP BY squirrel_id)
       AND t.squirrel_id NOT IN (
         SELECT j.squirrel_id
@@ -97,7 +98,7 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
     masses <- krsp_sql(con, mass_query)
     litter <- tbl(con, "litter") %>%
       filter_(~ yr == year) %>%
-      select_("squirrel_id", "ln", "fieldBDate", "date1", "tagDt") %>%
+      select_("id", "squirrel_id", "ln", "fieldBDate", "date1", "tagDt") %>%
       collect()
   })
 
@@ -106,7 +107,6 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
     # remove dead squirrels
     filter_(~ ft %in% 1:3) %>%
     group_by_("squirrel_id") %>%
-    arrange_(~ desc(id)) %>%
     filter_(~ row_number() == 1) %>%
     ungroup()
 
@@ -117,30 +117,31 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
     # sort out the various permutations of data - messy!
     mutate_(
       date = ~ suppressWarnings(as.Date(lubridate::ymd(date))),
-      ln = ~ ifelse(is.na(ln), 0, ln),
+      ln = ~ ifelse(ln %in% 1:3, ln, NA),
+      ln = ~ ifelse(is.na(id), "-", ln),
       nest_date = ~ pmax(fieldBDate, date1, tagDt, na.rm = TRUE),
       nest_date = ~ suppressWarnings(as.Date(lubridate::ymd(nest_date))),
       nest_status = ~ ifelse(!is.na(tagDt), "N2",
-                           ifelse(!is.na(date1), "N1",
-                                  ifelse(!is.na(fieldBDate), "Parturition", NA))),
+                             ifelse(!is.na(date1), "N1",
+                                    ifelse(!is.na(fieldBDate), "Parturition", NA))),
       trap_status = ~ ifelse(!is.na(nipple) & nipple == 5, "LL",
-                           ifelse(is.na(rep_con) | !rep_con %in% 1:4, "Unknown",
-                                  rep_con_map[rep_con])),
+                             ifelse(is.na(rep_con) | !rep_con %in% 1:4, "Unknown",
+                                    rep_con_map[rep_con])),
       # nest record more recent than trap record
       status = ~ ifelse(!is.na(nest_date) & nest_date > date, nest_status,
-                      # LL takes precedence
-                      ifelse(trap_status == "LL", "LL",
-                             ifelse(is.na(nest_status), trap_status, nest_status))),
+                        # LL takes precedence
+                        ifelse(trap_status == "LL", "LL",
+                               ifelse(is.na(nest_status), trap_status, nest_status))),
       status = ~ ifelse(status == "N2", "Completed", status),
       status = ~ factor(status,
-                      levels = c("", "Unknown", rep_con_map, "LL",
-                                 "Parturition", "N1", "Completed")),
+                        levels = c("", "Unknown", rep_con_map, "LL",
+                                   "Parturition", "N1", "Completed")),
       completion = ~ ifelse(status == "LL", "Lost Litter",
-                          ifelse(status == "Completed", "Completed",
-                                 "In Progress")),
+                            ifelse(status == "Completed", "Completed",
+                                   "In Progress")),
       completion = ~ factor(completion,
-                          levels = c("In Progress", "Lost Litter",
-                                     "Completed"))) %>%
+                            levels = c("In Progress", "Lost Litter",
+                                       "Completed"))) %>%
     # prepare tags, colours, and locs
     mutate_(
       color_left = ~ ifelse(is.na(color_left) | color_left == "",
@@ -173,7 +174,7 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
     inner_join(females, by = "squirrel_id") %>%
     arrange_("arr_comp", "arr_status", "squirrel_id", "ln") %>%
     select_("squirrel_id", "tags", "colours", "loc", litter_number = "ln",
-           "status", "trap_status", "nest_date", "nest_status",
+           "status", "trap_status", "nest_status", status_date = "nest_date",
            "mass", last_trapped = "date", "target_trap_date")
 
   # return raw data frame or DataTable
@@ -195,19 +196,19 @@ progress_datatable <- function(df) {
                           line_string, ", chartRangeMin: ", 100, ", chartRangeMax: ", 300, " }); }"),
                    collapse = "")
   col_names <- c("ID", "Tags", "Colours", "Loc", "Litter",
-                 "Status",  "Nest Date", "Nest Status",
+                 "Status", "Nest Status", "Status Date",
                  "Mass", "Last Trapped", "Trap By")
   dt <- DT::datatable(df,
                       rownames = FALSE,
                       colnames = col_names,
                       class = "nowrap stripe compact",
-                      fillContainer = TRUE,
+                      #fillContainer = TRUE,
                       options = list(
                         paging = FALSE,
                         searching = FALSE,
                         info = FALSE,
-                        scrollX = TRUE,
-                        scrollY = TRUE,
+                        #scrollX = FALSE,
+                        #scrollY = TRUE,
                         columnDefs = col_defs,
                         fnDrawCallback = cb_line))
   dt$dependencies <- append(dt$dependencies,

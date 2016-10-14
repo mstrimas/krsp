@@ -25,14 +25,14 @@ Check that radio collars have been correctly entered into the trapping table.
 The following checks have been implemented:
 
 \enumerate{
-  \item All trapping records with \code{radio} = 1 (new collar), 3 (changed),
-   2 (collar on), or 4 (collar removed) should have a radio collar frequency
-   in the \code{collar} field.
+  \item All trapping records with \code{radio} = 1 (new collar), 2 (collar
+    on), 3 (collar change), or 4 (collar removed) should have a radio collar
+    frequency in the \code{collar} field.
   \item Radio collar frequencies should all be 6 digits with no decimal. If a
-  decimal is used the frequency will get rounded to the nearest integer, e.g.
-  150.231 -> 150.
+    decimal is used the frequency will get rounded to the nearest integer,
+    e.g. 150.231 -> 150.
   \item Any squirrel with \code{radio} = 2 (collar on), 3 (collar change) or
-  4 (collar removed) should have a previous record with \code{radio} = 1
+    4 (collar removed) should have a previous record with \code{radio} = 1
     (new collar).
   \item All squirrels that currently have no collar (\code{radio = 5}), but
     previously had a collar (\code{radio = 1-3}), should have record for a

@@ -11,14 +11,14 @@
 #' The following checks have been implemented:
 #'
 #' \enumerate{
-#'   \item All trapping records with \code{radio} = 1 (new collar), 3 (changed),
-#'    2 (collar on), or 4 (collar removed) should have a radio collar frequency
-#'    in the \code{collar} field.
+#'   \item All trapping records with \code{radio} = 1 (new collar), 2 (collar
+#'     on), 3 (collar change), or 4 (collar removed) should have a radio collar
+#'     frequency in the \code{collar} field.
 #'   \item Radio collar frequencies should all be 6 digits with no decimal. If a
-#'   decimal is used the frequency will get rounded to the nearest integer, e.g.
-#'   150.231 -> 150.
+#'     decimal is used the frequency will get rounded to the nearest integer,
+#'     e.g. 150.231 -> 150.
 #'   \item Any squirrel with \code{radio} = 2 (collar on), 3 (collar change) or
-#'   4 (collar removed) should have a previous record with \code{radio} = 1
+#'     4 (collar removed) should have a previous record with \code{radio} = 1
 #'     (new collar).
 #'   \item All squirrels that currently have no collar (\code{radio = 5}), but
 #'     previously had a collar (\code{radio = 1-3}), should have record for a
@@ -115,7 +115,7 @@ check_collars.krsp <- function(con, grid, year = current_year()) {
   # check frequency present and valid
   results <- collars %>%
     filter_(~ !grepl("^[0-9]{6}$", collar)) %>%
-    mutate_(check = ~ "invalid collar frequency")
+    mutate_(check = ~ "check_collars_frequency")
 
   # create collar timeline
   rc_new <- collars %>%
@@ -147,7 +147,7 @@ check_collars.krsp <- function(con, grid, year = current_year()) {
   results <- collars %>%
     filter_(~ radio == 4) %>%
     anti_join(timeline, by = c("squirrel_id", date = "date_off")) %>%
-    mutate_(check = ~ "missing rc new") %>%
+    mutate_(check = ~ "check_collars_rcnew") %>%
     bind_rows(results)
 
   # rc new without rc off, based on subsequent rc new
@@ -159,7 +159,7 @@ check_collars.krsp <- function(con, grid, year = current_year()) {
     select_("squirrel_id", date = "date_new") %>%
     inner_join(collars %>% filter_(~ radio == 1),
                by = c("squirrel_id", "date")) %>%
-    mutate_(check = ~ "missing rc off") %>%
+    mutate_(check = ~ "check_collars_rcoff") %>%
     bind_rows(results, .)
   # now fill in gaps in timeline assuming date off is day before next rc new
   timeline <- timeline %>%
@@ -182,7 +182,7 @@ check_collars.krsp <- function(con, grid, year = current_year()) {
     filter_(~ !has_new) %>%
     distinct_("id") %>%
     inner_join(collars, by = "id") %>%
-    mutate_(check = ~ "missing rc new") %>%
+    mutate_(check = ~ "check_collars_rcnew") %>%
     bind_rows(results)
 
   # check for missing rc off record, signaled by non-collar records
@@ -199,7 +199,7 @@ check_collars.krsp <- function(con, grid, year = current_year()) {
     select_("squirrel_id", date = "date_new") %>%
     inner_join(collars %>% filter_(~ radio == 1),
                by = c("squirrel_id", "date")) %>%
-    mutate_(check = ~ "missing rc off") %>%
+    mutate_(check = ~ "check_collars_rcoff") %>%
     bind_rows(results, .)
 
   # convert radio codes to names
