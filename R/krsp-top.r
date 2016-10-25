@@ -3,6 +3,7 @@
 #' Generate a list of the top squirrelers based on a variety of metrics.
 #'
 #' @param con Connection to KRSP database
+#' @param grid character; a single study grid
 #' @param year integer; year to search within. Defaults to all years.
 #'
 #' @return A data frame of squirrelers and number of trapping records, behaviour

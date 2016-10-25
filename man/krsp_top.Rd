@@ -9,6 +9,8 @@ krsp_top(con, grid, year)
 \arguments{
 \item{con}{Connection to KRSP database}
 
+\item{grid}{character; a single study grid}
+
 \item{year}{integer; year to search within. Defaults to all years.}
 }
 \value{

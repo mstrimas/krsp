@@ -47,12 +47,12 @@ grid_list <- function(con) {
 # determine the next trap date based on status and last trap date
 next_trap <- function(status, trap_date) {
   status <- as.character(status)
-  days_forward <- c(3, 3,
-                    18, 14, 7, 3, 3,
+  days_forward <- c(18, 14, 7, 3,
+                    18, 3,
                     10, 10, 10)
-  names(days_forward) <- c("", "Unknown",
-                           "P0", "P1", "P2", "P3", "LL",
-                           "Parturition", "N1", "Completed")
+  names(days_forward) <- c("P0", "P1", "P2", "P3",
+                           "Non-breeder", "LL",
+                           "Parturition", "N1", "N2")
   if (lubridate::is.Date(trap_date)) {
     to_trap <- trap_date + unname(days_forward[status])
     to_trap <- dplyr::coalesce(to_trap, trap_date)
