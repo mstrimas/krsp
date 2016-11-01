@@ -6,6 +6,28 @@ current_year <- function() {
   as.integer(format(Sys.Date(), "%Y"))
 }
 
+as_reflo <- function(x, y) {
+  x <- as.character(x)
+  y <- as.character(y)
+  # ensure locs are valid
+  x <- ifelse(valid_loc(x), x, NA)
+  y <- ifelse(valid_loc(y, alpha = FALSE), y, NA)
+  # split on .
+  x_split <- stringr::str_split_fixed(x, "\\.", n = 2)
+  y_split <- stringr::str_split_fixed(y, "\\.", n = 2)
+  # .5-9 = ".", .0-4 = ""
+  x_right <- ifelse(as.numeric(x_split[, 2]) >= 5, ".", "")
+  y_right <- ifelse(as.numeric(y_split[, 2]) >= 5, ".", "")
+  # account for missing .x
+  x_right <- coalesce(x_right, "")
+  y_right <- coalesce(y_right, "")
+  # combine back together
+  x_reflo <- paste0(x_split[, 1], x_right)
+  y_reflo <- paste0(y_split[, 1], y_right)
+  reflo <- paste0(x_reflo, y_reflo)
+  ifelse(is.na(x) | is.na(y), NA, reflo)
+}
+
 # functions for listing levels of factors in database
 year_list <- function(con) {
   years <- NULL

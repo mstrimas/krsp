@@ -18,7 +18,8 @@ Imports: assertthat,
     lazyeval,
     DT,
     htmlwidgets,
-    tidyr
+    tidyr,
+    stringr
 URL: https://github.com/mstrimas/krsp
 BugReports: https://github.com/mstrimas/krsp/issues
 Suggests: knitr,
