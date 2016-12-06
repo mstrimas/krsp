@@ -23,6 +23,6 @@ is assumed to have a collar on if there is a record for a new radio collar (
 }
 \examples{
 con <- krsp_connect()
-krsp_collars(con, grid = "KL", year = 2014)
+krsp_collars(con, grid = "JO", year = 2014)
 }
 

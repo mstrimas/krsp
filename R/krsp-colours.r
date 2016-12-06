@@ -91,6 +91,11 @@ krsp_colours.krsp <- function(con, grid, year = current_year()) {
     group_by_("squirrel_id") %>%
     filter_(~ row_number(desc(date)) == 1) %>%
     ungroup()
+  if (!is.data.frame(trap_lit) | nrow(trap_lit) == 0) {
+    return(as.tbl(data.frame(
+
+    )))
+  }
   results <- trap_lit %>%
     mutate_(
       juvenile = ~ (juvenile == 1),

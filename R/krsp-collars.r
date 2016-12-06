@@ -12,7 +12,7 @@
 #' @export
 #' @examples
 #' con <- krsp_connect()
-#' krsp_collars(con, grid = "KL", year = 2014)
+#' krsp_collars(con, grid = "JO", year = 2014)
 krsp_collars <- function(con, grid, year) {
   UseMethod("krsp_collars")
 }
@@ -25,7 +25,7 @@ krsp_collars.krsp <- function(con, grid, year = current_year()) {
               valid_year(year, single = TRUE))
   year_arg <- as.integer(year)
 
-  # query for most recent trapping record
+  # query for most recent trapping record for squirrels with collars
   if (missing(grid)) {
     grid_str <- ""
   } else {
@@ -54,6 +54,7 @@ krsp_collars.krsp <- function(con, grid, year = current_year()) {
 
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
+    # all collar records from trapping
     collars <- tbl(con, "trapping") %>%
       mutate_(year = ~ year(date)) %>%
       filter_(~ !is.na(squirrel_id),
@@ -79,6 +80,14 @@ krsp_collars.krsp <- function(con, grid, year = current_year()) {
     mutate_(date = ~ lubridate::ymd(date)) %>%
     select_("id", "grid", "year", "observer",
             "squirrel_id", "date", "radio", "collar")
+  # replace missing frequencies with previous non-NA value
+  collars <- collars %>%
+    mutate_(collar = ~ if_else(grepl("^[0-9]{6}$", as.character(collar)),
+                               collar, NA_integer_)) %>%
+    arrange_("squirrel_id", "date") %>%
+    group_by_("squirrel_id") %>%
+    mutate_(collar = ~ replace_na(collar)) %>%
+    ungroup()
   recent <- recent %>%
     mutate_(
       color_left = ~ ifelse(is.na(color_left) | color_left == "",

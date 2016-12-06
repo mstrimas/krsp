@@ -22,6 +22,8 @@
 #' @param locy_range vector of length 2 giving upper and lower bounds of y locs,
 #'   either as character (e.g. \code{c("5", "10.5")}) or numeric (e.g.
 #'   \code{5, 10.5}).
+#' @param middens character; whether to show middens from the August ("august")
+#'   census, the May census ("may"), or not display middens at all ("none").
 #' @param data logical; if TRUE return data frame instead of plotting
 #'
 #' @return Displays and returns a \code{ggvis} plot of rattle locations, unless
@@ -31,21 +33,24 @@
 #' @examples
 #' con <- krsp_connect()
 #' krsp_rattlemap(con, "JO", 2014, data = TRUE) %>%
-#'   head
+#'   head()
 #' krsp_rattlemap(con, "KL", 2015)
 #' # choose date range
 #' krsp_rattlemap(con, "AG", date_range = c("2014-04-01", "2014-04-10"))
 #' # choose loc range
 #' krsp_rattlemap(con, "JO", 2010, locx_range = c("D", "H"),
 #'   locy_range = c(5, 10))
-krsp_rattlemap <- function(con, grid, year, date_range, locx_range, locy_range,
-                           data) {
+krsp_rattlemap <- function(con, grid, year, date_range,
+                           locx_range, locy_range,
+                           middens, data) {
   UseMethod("krsp_rattlemap")
 }
 
 #' @export
-krsp_rattlemap.krsp <- function(con, grid, year, date_range, locx_range,
-                                locy_range, data = FALSE) {
+krsp_rattlemap.krsp <- function(con, grid, year, date_range,
+                                locx_range, locy_range,
+                                middens = c("none", "august", "may"),
+                                data = FALSE) {
   # assertions on arguments
   assert_that(inherits(con, "src_mysql"),
               missing(year) || valid_year(year, single = TRUE),
@@ -53,6 +58,7 @@ krsp_rattlemap.krsp <- function(con, grid, year, date_range, locx_range,
               missing(locx_range) || length(locx_range) == 2,
               missing(locy_range) || length(locy_range) == 2,
               valid_grid(grid, single = TRUE))
+  middens <- match.arg(middens)
   # convert dates
   if (!missing(date_range)) {
     from_date <- suppressWarnings(as.Date(lubridate::ymd(date_range[1])))
@@ -122,10 +128,30 @@ krsp_rattlemap.krsp <- function(con, grid, year, date_range, locx_range,
       select_("squirrel_id", grid = "gr", "locx", "locy", "date") %>%
       collect()
     recent <- krsp_sql(con, recent_query)
+    if (middens != "none") {
+      if (middens == "august") {
+        cdate <- paste0(year - 1, "-08-15")
+      } else if (middens == "may") {
+        cdate <- paste0(year, "-05-15")
+      }
+      census <- tbl(con, "census") %>%
+        filter_(~ gr == grid_choice,
+                ~ census_date == cdate) %>%
+        select_("squirrel_id", grid = "gr", "locx", "locy",
+                date = "census_date") %>%
+        collect()
+    }
   })
-  results_b <- inner_join(behaviour, recent, by = "squirrel_id")
-  results_t <- inner_join(trapping, recent, by = "squirrel_id")
+  results_b <- inner_join(behaviour, recent, by = "squirrel_id") %>%
+    mutate_(source = ~ "behaviour")
+  results_t <- inner_join(trapping, recent, by = "squirrel_id") %>%
+    mutate_(source = ~ "trapping")
   results <- bind_rows(results_t, results_b)
+  if (middens != "none") {
+    results_m <- inner_join(census, recent, by = "squirrel_id") %>%
+      mutate_(source = ~ "census")
+    results <- bind_rows(results, results_m)
+  }
   # full list of rattles and corresponding squirrel info
   results <- results %>%
     mutate_(squirrel_id = ~ as.integer(squirrel_id),
@@ -145,7 +171,7 @@ krsp_rattlemap.krsp <- function(con, grid, year, date_range, locx_range,
     filter_(~ !is.na(x), ~ !is.na(y)) %>%
     mutate_(id = ~ row_number()) %>%
     select_("id", "squirrel_id", "x", "y", "grid", "sex",
-            "colours", "tags", "date", "trap_date")
+            "colours", "tags", "date", "trap_date", "source")
 
   # date filtering
   if (!missing(date_range)) {
@@ -172,9 +198,18 @@ plot_rattles <- function(rattles, reverse_grid = FALSE) {
   if (nrow(rattles) == 0) {
     return("No rattles found.")
   }
+  # create squirrel_id factor variable for colouring
+  rattles <- rattles %>%
+    mutate_(sid = ~ factor(squirrel_id))
+  # middens present?
+  all_data <- rattles
+  middens <- rattles %>%
+    filter_(~ source == "census")
+  rattles <- rattles %>%
+    filter_(~ source != "census")
   # create interactive plot
   popup <- function(x) {
-    row <- rattles[rattles$id == x$id, ]
+    row <- rattles[all_data$id == x$id, ]
     paste(
       sprintf("<strong>Date:</strong> %s", row$date),
       sprintf("<strong>Colours:</strong> %s", row$colours),
@@ -183,17 +218,17 @@ plot_rattles <- function(rattles, reverse_grid = FALSE) {
       sep = "<br />")
   }
   fnt <- c("Helvetica Neue", "sans-serif")
-  x_ticks <- floor(min(rattles$x)):ceiling(max(rattles$x))
-  y_ticks <- floor(min(rattles$y)):ceiling(max(rattles$y))
+  x_ticks <- floor(min(all_data$x)):ceiling(max(all_data$x))
+  y_ticks <- floor(min(all_data$y)):ceiling(max(all_data$y))
   # letter labels for x-axis
   x_labels <- data_frame(x = x_ticks + ifelse(reverse_grid, 0.2, -0.2),
-                         y = ceiling(max(rattles$y)),
+                         y = ceiling(max(all_data$y)),
                          label = sapply(x_ticks, function(i) {
                            ifelse(i > 0 & i <= 26, LETTERS[i], i)
                          })
   )
   g <- ggvis::ggvis(rattles, ~x, ~y) %>%
-    ggvis::layer_points(fill = ~factor(squirrel_id), shape = ~sex,
+    ggvis::layer_points(fill = ~sid, shape = ~sex,
                         key := ~id, opacity := 0.7) %>%
     # assign shapes to sexes
     ggvis::scale_nominal("shape", range = c("circle", "square", "diamond")) %>%
@@ -238,5 +273,10 @@ plot_rattles <- function(rattles, reverse_grid = FALSE) {
     # popup tooltips with additional information
     ggvis::add_tooltip(popup) %>%
     ggvis::set_options(height = 650, width = 900)
+
+  # add middens locations if requested
+  g <- ggvis::layer_points(vis = g, data = middens, stroke = ~sid,
+                           fill := NA, shape = ~sex) %>%
+    ggvis::hide_legend("stroke")
   return(g)
 }

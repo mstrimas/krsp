@@ -4,7 +4,8 @@
 \alias{krsp_rattlemap}
 \title{Map behaviour records on grid}
 \usage{
-krsp_rattlemap(con, grid, year, date_range, locx_range, locy_range, data)
+krsp_rattlemap(con, grid, year, date_range, locx_range, locy_range, middens,
+  data)
 }
 \arguments{
 \item{con}{Connection to KRSP database}
@@ -24,6 +25,9 @@ either as character (e.g. \code{c("A", "H.5")}) or numeric (e.g.
 \item{locy_range}{vector of length 2 giving upper and lower bounds of y locs,
 either as character (e.g. \code{c("5", "10.5")}) or numeric (e.g.
 \code{5, 10.5}).}
+
+\item{middens}{character; whether to show middens from the August ("august")
+census, the May census ("may"), or not display middens at all ("none").}
 
 \item{data}{logical; if TRUE return data frame instead of plotting}
 }
@@ -47,7 +51,7 @@ which must be in the same year. If \code{date_range} is provided is ignored.
 \examples{
 con <- krsp_connect()
 krsp_rattlemap(con, "JO", 2014, data = TRUE) \%>\%
-  head
+  head()
 krsp_rattlemap(con, "KL", 2015)
 # choose date range
 krsp_rattlemap(con, "AG", date_range = c("2014-04-01", "2014-04-10"))

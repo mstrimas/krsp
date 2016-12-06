@@ -2,6 +2,16 @@ is_integer <- function(x) {
   all(x == as.integer(x))
 }
 
+# replace NAs with last non-NA value
+replace_na <- function(x) {
+  # http://stackoverflow.com/a/13810615/3591386
+  ind = which(!is.na(x))
+  if (is.na(x[1])) {
+    ind = c(1,ind)
+  }
+  rep(x[ind], times = diff(c(ind, length(x) + 1) ))
+}
+
 current_year <- function() {
   as.integer(format(Sys.Date(), "%Y"))
 }

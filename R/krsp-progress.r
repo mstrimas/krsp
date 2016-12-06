@@ -220,6 +220,9 @@ progress_datatable <- function(df) {
   clr_lvl <- c("LL", "Non-breeder",
                "P0", "P1", "P2", "P3",
                "Parturition", "N1", "N2")
+  clr_bg <- c("#555555", "#FFFFFF",
+              "#FFFFFF", "#E41A1C", "#E41A1C", "#E41A1C",
+              "#FF7F00", "#FF7F00", "#4DAF4A")
   clr_bg <- c("#377EB8", "#FFFFFF",
               "#FFFFFF", "#E41A1C", "#E41A1C", "#E41A1C",
               "#FF7F00", "#FF7F00", "#4DAF4A")
