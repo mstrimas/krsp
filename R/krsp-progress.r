@@ -1,8 +1,8 @@
 #' Display seasonal data collection progress
 #'
 #' Display an interactive visualization of data collection progress for the
-#' season. All adult females caught in the given year are inlcuded provided their
-#' most recent trapping record has fate 1-3.
+#' season. All adult females caught in the given year are inlcuded provided
+#' their most recent trapping record has fate 1-3.
 #'
 #' The status of a female is based on the most recent trapping record and the
 #' litter table. If the most recent trapping record is dated prior to the date
@@ -71,31 +71,9 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
           YEAR(COALESCE(fieldBDate, date1, tagDt)) = %i
           AND GRID = '%s'
         );", grid_choice, year, year, grid_choice)
-  mass_query <- sprintf(
-    "SELECT st.squirrel_id, GROUP_CONCAT(st.wgt SEPARATOR ',') AS mass
-    FROM (
-      SELECT
-        t.squirrel_id,
-        t.date,
-        t.wgt
-      FROM
-        squirrel                s
-        INNER JOIN trapping     t
-          ON s.id = t.squirrel_id
-      WHERE
-        s.gr = '%s'
-        AND s.sex = 'F'
-        AND YEAR(t.date) = %i
-        AND t.wgt > 100
-      ORDER BY
-        t.squirrel_id,
-        t.date) st
-    GROUP BY st.squirrel_id;",
-    grid_choice, year)
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     females <- krsp_sql(con, female_query)
-    masses <- krsp_sql(con, mass_query)
     litter <- tbl(con, "litter") %>%
       filter_(~ yr == year) %>%
       select_("id", "squirrel_id", "br", "ln",
@@ -138,8 +116,8 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
       # if trap later than nest and lost litter or pregnant, takes precedence
       trap_precedence = ~ (is.na(litter_date) | litter_date < trap_date),
       status = ~ ifelse(trap_precedence & trap_status != "P0", trap_status, status),
-      status = ~ ifelse(trap_precedence & !is.na(litter_date) & litter_status == "N2",
-                        trap_status, status),
+      # status = ~ ifelse(trap_precedence & !is.na(litter_date) & litter_status == "N2",
+      #                   trap_status, status),
       status = ~ factor(status,
                         levels = c("P3", "P2", "P1",
                                    "Parturition", "N1",
@@ -170,8 +148,6 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
   # target trap date
   females <- females %>%
     mutate_(target_trap_date = ~ next_trap(as.character(status), trap_date))
-  # bring in masses
-  females <- left_join(females, masses, by = "squirrel_id")
   # sensible ordering
   females <- females %>%
     group_by_("squirrel_id") %>%
@@ -181,7 +157,7 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
     arrange_("arr_comp", "arr_status", "squirrel_id", "ln") %>%
     select_("squirrel_id", "tags", "colours", "loc", litter_number = "ln",
            "status", "litter_status", "litter_date",
-           "trap_status", "trap_date", "target_trap_date", "mass")
+           "trap_status", "trap_date", "target_trap_date")
 
   # return raw data frame or DataTable
   if (data) {
@@ -192,15 +168,6 @@ krsp_progress.krsp <- function(con, grid, year = current_year(), data = FALSE) {
 }
 
 progress_datatable <- function(df) {
-  df <- df %>% select(-mass)
-  # mass sparkline javascript
-  # col_defs <- list(list(targets = 8,
-  #                       render = DT::JS("function(data, type, full){ return '<span class=spark>' + data + '</span>' }")))
-  # line_string <- "type: 'line', lineColor: 'black', fillColor: '#ccc', highlightLineColor: 'orange', highlightSpotColor: 'orange'"
-  # cb_line = DT::JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ",
-  #                         line_string, ", chartRangeMin: ", 100, ", chartRangeMax: ", 300, " }); }"),
-  #                  collapse = "")
-  # create DataTable
   col_names <- c("ID", "Tags", "Colours", "Loc", "Litter",
                  "Status", "Litter Status", "Litter Date",
                  "Trap Status", "Last Trapped", "Trap By")
@@ -214,18 +181,13 @@ progress_datatable <- function(df) {
                         info = FALSE,
                         columnDefs = list(list(className = 'dt-center',
                                                targets = c(2:10)))))
-  # dt$dependencies <- append(dt$dependencies,
-  #                           htmlwidgets:::getDependency("sparkline"))
   # highlight based on status
   clr_lvl <- c("LL", "Non-breeder",
                "P0", "P1", "P2", "P3",
                "Parturition", "N1", "N2")
   clr_bg <- c("#555555", "#FFFFFF",
-              "#FFFFFF", "#E41A1C", "#E41A1C", "#E41A1C",
-              "#FF7F00", "#FF7F00", "#4DAF4A")
-  clr_bg <- c("#377EB8", "#FFFFFF",
-              "#FFFFFF", "#E41A1C", "#E41A1C", "#E41A1C",
-              "#FF7F00", "#FF7F00", "#4DAF4A")
+              "#FFFFFF", "#4DAF4A", "#4DAF4A", "#4DAF4A",
+              "#E41A1C", "#FF7F00", "#377EB8")
   clr_txt <- c("#FFFFFF", "#000000",
                "#000000", "#FFFFFF", "#FFFFFF", "#FFFFFF",
                "#FFFFFF", "#FFFFFF", "#FFFFFF")

@@ -19,7 +19,8 @@ Imports: assertthat,
     DT,
     htmlwidgets,
     tidyr,
-    stringr
+    stringr,
+    shiny
 URL: https://github.com/mstrimas/krsp
 BugReports: https://github.com/mstrimas/krsp/issues
 Suggests: knitr,
