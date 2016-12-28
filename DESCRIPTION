@@ -1,30 +1,9 @@
-Package: krsp
-Title: Working with the Kluane Red Squirrel Project Database
-Version: 0.0.0.904
-Authors@R: "Matthew Strimas-Mackey <mstrimas@gmail.com> [aut,cre]"
-Description: This package is designed to help user bring data from the KRSP
-    database into R. In addition, common database queries are standardized as R
-    functions to ensure consistency.
-Depends:
-    R (>= 3.1.2),
-    dplyr
+Version: 1.0
+Type: Shiny
+Title: Shiny Squirrels
+Authors@R: c(
+  person("Matthew", "Strimas-Mackey", email="mstrimas@gmail.com", role = c("aut", "cre")),
+  person("Andrew", "McAdam", email="amcadam@uoguelph.ca", role = c("aut"", cph""))
+  )
+Maintainer: Matthew Strimas-Mackey <mstrimas@gmail.com>
 License: MIT + file LICENSE
-LazyData: true
-RoxygenNote: 5.0.1
-Imports: assertthat,
-    ggvis,
-    DBI,
-    lubridate,
-    lazyeval,
-    DT,
-    htmlwidgets,
-    tidyr,
-    stringr,
-    shiny
-URL: https://github.com/mstrimas/krsp
-BugReports: https://github.com/mstrimas/krsp/issues
-Suggests: knitr,
-    rmarkdown,
-    RMySQL,
-    pool
-VignetteBuilder: knitr
