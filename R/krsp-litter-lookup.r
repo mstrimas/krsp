@@ -46,7 +46,7 @@ krsp_litter_lookup.krsp <- function(con, year, squirrel_id, ln) {
   if (nrow(nest) == 0) {
     stop("No corresponding nest found.")
   }
-  if (unique(nest$litter_id) > 1) {
+  if (n_distinct(nest$litter_id) > 1) {
     stop("Multiple matching nests.")
   }
   as.tbl(nest)

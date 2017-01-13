@@ -22,8 +22,8 @@ Displays and returns a \code{ggvis} plot of seasonal workflow
 }
 \description{
 Display an interactive visualization of data collection progress for the
-season. All adult females caught in the given year are inlcuded provided their
-most recent trapping record has fate 1-3.
+season. All adult females caught in the given year are inlcuded provided
+their most recent trapping record has fate 1-3.
 }
 \details{
 The status of a female is based on the most recent trapping record and the
