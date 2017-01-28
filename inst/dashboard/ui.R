@@ -1,9 +1,9 @@
 shinyUI(navbarPage(
-  
+
   # title
   "Squirrel Dashboard",
-  
-  ##########   Rattle Map   ########## 
+
+  ##########   Rattle Map   ##########
   tabPanel("Rattle Map",
     sidebarLayout(
       sidebarPanel(
@@ -28,7 +28,7 @@ shinyUI(navbarPage(
         ),
         width = 3
       ),
-      
+
       # main panel
       mainPanel(
         tabsetPanel(
@@ -42,8 +42,8 @@ shinyUI(navbarPage(
       )
     )
   ),
-  
-  ##########   Progress   ########## 
+
+  ##########   Progress   ##########
   tabPanel("Progress",
     sidebarLayout(
       sidebarPanel(
@@ -68,7 +68,7 @@ shinyUI(navbarPage(
         ),
         width = 3
       ),
-      
+
       # main panel
       mainPanel(
         tabsetPanel(
@@ -78,8 +78,44 @@ shinyUI(navbarPage(
       )
     )
   ),
-  
-  ##########   Collars   ########## 
+
+  ##########   Census   ##########
+  tabPanel("Census",
+    sidebarLayout(
+      sidebarPanel(
+        h2("Census"),
+        p("Display progress towards completing the census."),
+        h5("Which census are you completing?"),
+        selectInput("grid_input_census", NULL, grids),
+        fluidRow(
+          column(6, selectInput("census_input_census", NULL,
+                                c(May = "may", August = "august"))),
+          column(6, selectInput("year_input_census", NULL,
+                                years[years > 2012]))
+        ),
+        actionButton("submit_census", "Submit"),
+        conditionalPanel(condition = "input.submit_census > 0",
+                         p(textOutput("description_census")),
+                         downloadButton("download_data_census", "Download")
+        ),
+        width = 3
+      ),
+
+      # main panel
+      mainPanel(
+        tabsetPanel(
+          tabPanel("Table", br(), DT::dataTableOutput("table_census")),
+          tabPanel("Map", ggvisOutput("plot_census"),
+                   conditionalPanel(condition = "input.submit_census > 0",
+                                    p(strong("Note: "), "rattles appear as solid symbols, ",
+                                      "middens as hollow symbols. Colours distinguish ",
+                                      "different squirrels.")))
+        )
+      )
+    )
+  ),
+
+  ##########   Collars   ##########
   tabPanel("Collars",
     sidebarLayout(
       sidebarPanel(
@@ -90,14 +126,14 @@ shinyUI(navbarPage(
         actionButton("submit_collars", "Submit"),
         width = 3
       ),
-      
+
       # main panel
       mainPanel(
         DT::dataTableOutput("table_collars")
       )
     )
   ),
-  
+
   ##########   Data Checking   ##########
   tabPanel("Data Checking",
     sidebarLayout(
@@ -108,9 +144,9 @@ shinyUI(navbarPage(
           "which will need to be manually fixed in the database."),
         selectInput("grid_input_checks", "Grid:", c("All", grids)),
         selectInput("year_input_checks", "Year:", years),
-        selectInput("type_input_checks", "Check:", 
+        selectInput("type_input_checks", "Check:",
                     c("Trapping", "Nests", "Collars", "Behaviour")),
-        uiOutput("description_checks"), 
+        uiOutput("description_checks"),
         fluidRow(
           column(width = 6, actionButton("submit_checks", "Submit")),
           column(width = 6,
@@ -126,12 +162,12 @@ shinyUI(navbarPage(
         ),
         width = 3
       ),
-      
+
       # main panel
       mainPanel(
         tabsetPanel(
           tabPanel("Results", br(), DT::dataTableOutput("table_checks")),
-          tabPanel("Check Descriptions", br(), 
+          tabPanel("Check Descriptions", br(),
                    p("Within each category, a variety of specific checks are ",
                      "performed as noted in the",
                      strong("check"),
@@ -145,8 +181,8 @@ shinyUI(navbarPage(
       )
     )
   ),
-  
-  ##########   Colour Keys   ########## 
+
+  ##########   Colour Keys   ##########
   tabPanel("Colour Keys",
     sidebarLayout(
       sidebarPanel(
@@ -170,7 +206,7 @@ shinyUI(navbarPage(
                          textOutput("more_colours")),
         width = 3
       ),
-      
+
       # main panel
       mainPanel(
         tabsetPanel(
@@ -188,8 +224,8 @@ shinyUI(navbarPage(
       )
     )
   ),
-  
-  ##########   Part Date Calculator   ########## 
+
+  ##########   Part Date Calculator   ##########
   tabPanel("Part Date",
     fluidRow(column(width = 6, offset = 3,
       h2("Parturition Date Calculator"),
@@ -206,35 +242,35 @@ shinyUI(navbarPage(
       ),
       fluidRow(
         column(3, selectInput("year_pdate", NA, years)),
-        column(3, numericInput("sid_pdate", NA, NA, min = 1, max = 100000, 
+        column(3, numericInput("sid_pdate", NA, NA, min = 1, max = 100000,
                                step = 1, width = "100%")),
-        column(3, numericInput("ln_pdate", NA, NA, min = 1, max = 4, 
+        column(3, numericInput("ln_pdate", NA, NA, min = 1, max = 4,
                                step = 1, width = "100%")),
         column(3, actionButton("lookup_pdate", "Look Up"))
       ),
       p(strong("Nest 1 weights (grams):")),
       fluidRow(
-        column(6, numericInput("w1", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w1", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%")),
-        column(6, numericInput("w2", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w2", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%"))
       ),
       fluidRow(
-        column(6, numericInput("w3", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w3", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%")),
-        column(6, numericInput("w4", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w4", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%"))
       ),
       fluidRow(
-        column(6, numericInput("w5", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w5", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%")),
-        column(6, numericInput("w6", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w6", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%"))
       ),
       fluidRow(
-        column(6, numericInput("w7", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w7", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%")),
-        column(6, numericInput("w8", NA, NA, min = 1, max = 100, 
+        column(6, numericInput("w8", NA, NA, min = 1, max = 100,
                                step = 0.1, width = "100%"))
       ),
       fluidRow(
@@ -245,14 +281,14 @@ shinyUI(navbarPage(
         column(4, dateInput("lac_pdate", "First lactating:", value = Sys.Date(),
                             min = "1987-01-01", max = Sys.Date() + 14))
       ),
-      fluidRow( 
+      fluidRow(
         column(4, actionButton("submit_pdate", "Submit")),
-        column(4, checkboxInput("usepreg_pdate", "Use last pregnant date", 
+        column(4, checkboxInput("usepreg_pdate", "Use last pregnant date",
                                 value = TRUE)),
-        column(4, checkboxInput("uselac_pdate", "Use first lactating date", 
+        column(4, checkboxInput("uselac_pdate", "Use first lactating date",
                                 value = TRUE))
       ),
-      hr(), 
+      hr(),
       conditionalPanel(condition = "input.submit_pdate > 0",
         fluidRow(column(4, strong("Litter Size:"),
                         textOutput("littersize_pdate")),
@@ -262,15 +298,15 @@ shinyUI(navbarPage(
                         textOutput("pdate_pdate"))
         ),
         fluidRow(column(12,
-          p(strong("Note:"), "This calculation is an", strong("estimate"), 
+          p(strong("Note:"), "This calculation is an", strong("estimate"),
             " and should never supersede information from ",
             strong("trapping events."))
         ))
       )
     ))
   ),
-  
-  ##########   Top Squirrelers   ########## 
+
+  ##########   Top Squirrelers   ##########
   tabPanel("Top Squirrelers",
     sidebarLayout(
       sidebarPanel(
@@ -285,7 +321,7 @@ shinyUI(navbarPage(
         actionButton("submit_top", "Submit"),
         width = 3
       ),
-      
+
       # main panel
       mainPanel(
         DT::dataTableOutput("table_top")

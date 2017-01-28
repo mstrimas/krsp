@@ -7,6 +7,16 @@ library(ggvis)
 library(DT)
 library(dplyr)
 library(tidyr)
+library(readr)
+
+# set connection parameters for calling directly
+if (!exists(".dbcon")) {
+  .dbcon <- list(
+    dbname = "krsp",
+    host = "localhost",
+    username = "root",
+    password = "")
+}
 
 pool <- dbPool(
   drv = RMySQL::MySQL(),

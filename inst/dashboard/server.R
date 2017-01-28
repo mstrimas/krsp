@@ -1,20 +1,20 @@
 shinyServer(function(input, output, session) {
-  ##########   Rattle Map   ########## 
+  ##########   Rattle Map   ##########
   fresh_data_rattle <- TRUE
-  
+
   # data
   rattles <- eventReactive(input$submit_rattle, {
     fresh_data_rattle <<- TRUE
     kp(pool) %>%
-      krsp_rattlemap(grid = input$grid_input_rattle, 
-                     year = input$year_input_rattle, 
+      krsp_rattlemap(grid = input$grid_input_rattle,
+                     year = input$year_input_rattle,
                      middens = input$middens_rattle,
                      data = TRUE)
   })
   reverse_grid <- eventReactive(input$submit_rattle, {
     input$grid_input_rattle == "AG"
   })
-  
+
   # filters for rattle data frame
   # date
   output$date_input_rattle <- renderUI({
@@ -37,7 +37,7 @@ shinyServer(function(input, output, session) {
     }
     locs[1] <- floor(locs[1])
     locs[2] <- ceiling(locs[2])
-    sliderInput("locx_input_rattle", "Loc X: ", 
+    sliderInput("locx_input_rattle", "Loc X: ",
                 min = locs[1], max = locs[2],
                 value = locs,
                 step = 1)
@@ -51,12 +51,12 @@ shinyServer(function(input, output, session) {
     }
     locs[1] <- floor(locs[1])
     locs[2] <- ceiling(locs[2])
-    sliderInput("locy_input_rattle", "Loc Y: ", 
+    sliderInput("locy_input_rattle", "Loc Y: ",
                 min = locs[1], max = locs[2],
                 value = locs,
                 step = 1)
   })
-  
+
   # reactive expressions for filters
   # required because web page inputs not updated until after full flush
   # date
@@ -110,16 +110,16 @@ shinyServer(function(input, output, session) {
     }
     return(locs)
   })
-  
+
   # filtered data
   rattles_filtered <- reactive({
     # next 3 lines required to ensure reactive dependence on ranges
     dates <- date_range()
     locx <- locx_range()
     locy <- locy_range()
-    if (is.data.frame(rattles()) & nrow(rattles()) > 0 & 
+    if (is.data.frame(rattles()) & nrow(rattles()) > 0 &
         !is.null(dates) & !is.null(locx) & !is.null(locy)) {
-      r <- rattles() %>% 
+      r <- rattles() %>%
         filter(date >= dates[1], date <= dates[2],
                x >= locx[1], x <= locx[2],
                y >= locy[1], y <= locy[2])
@@ -131,12 +131,12 @@ shinyServer(function(input, output, session) {
     }
     return(r)
   })
-  
+
   # plot
   observe({
     if (!is.null(rattles_filtered())) {
-      rattles_filtered() %>% 
-        krsp:::plot_rattles(reverse_grid()) %>% 
+      rattles_filtered() %>%
+        krsp:::plot_rattles(reverse_grid()) %>%
         bind_shiny("plot_rattle")
     } else {
       message_plot("No rattles found.") %>%
@@ -145,11 +145,11 @@ shinyServer(function(input, output, session) {
     # ui now updated, data no longer fresh
     fresh_data_rattle <<- FALSE
   })
-  
+
   # data table
   output$table_rattle = DT::renderDataTable(
     if (!is.null(rattles_filtered())) {
-      rattles_filtered() %>% select(-id) %>% mutate(source = factor(source))
+      rattles_filtered() %>% select(-id, -grid) %>% mutate(source = factor(source))
     } else {NULL},
     server = TRUE,
     options = list(pageLength = 20, autoWidth = TRUE),
@@ -160,12 +160,12 @@ shinyServer(function(input, output, session) {
       "ID" = "squirrel_id",
       "Loc X" = "x",
       "Loc Y" = "y",
-      "Grid" = "grid",
       "Sex" = "sex",
       "Colours" = "colours",
-      "Tags" = "tags", 
+      "Tags" = "tags",
       "Rattle Date" = "date",
-      "Last Trapped" = "trap_date")
+      "Last Trapped" = "trap_date",
+      "Source" = "source")
   )
   # download
   output$download_data_rattle <- downloadHandler(
@@ -178,20 +178,20 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       data <- rattles_filtered()
       validate(
-        need(is.data.frame(data) & nrow(data) > 0, 
+        need(is.data.frame(data) & nrow(data) > 0,
              "No data to download")
       )
       write_csv(data, file)
     }
   )
-  
-  ##########   Progress   ########## 
-  
+
+  ##########   Progress   ##########
+
   # data
   progress <- eventReactive(input$submit_progress, {
     kp(pool) %>%
-      krsp_progress(grid = input$grid_input_progress, 
-                    year = input$year_input_progress, 
+      krsp_progress(grid = input$grid_input_progress,
+                    year = input$year_input_progress,
                     data = TRUE)
   })
   # data table
@@ -199,9 +199,79 @@ shinyServer(function(input, output, session) {
     if (!is.null(progress())) krsp:::progress_datatable(progress()) else NULL,
     server = TRUE
   )
-  
-  ##########   Collars   ########## 
-  
+
+  ##########   Census   ##########
+
+  # data
+  census <- eventReactive(input$submit_census, {
+    kp(pool) %>%
+      krsp_census_progress(grid = input$grid_input_census,
+                           year = input$year_input_census,
+                           census = input$census_input_census)
+  })
+  # update description
+  output$description_census <- renderText({
+    year <- input$year_input_census
+    if (input$census_input_census == "may") {
+      month <- "May"
+      start_date <- paste0(year, "-01-01")
+      end_date <- paste0(year, "-05-15")
+    } else {
+      month <- "August"
+      start_date <- paste0(year, "-05-16")
+      end_date <- paste0(year, "-08-15")
+    }
+    paste("Showing all squirrels caught between %s and %s and, for",
+          "those in the %s %s census, their census fate and reflo.") %>%
+      sprintf(start_date, end_date, month, year)
+  })
+  # plot
+  # observe({
+  #   data() %>%
+  #     krsp:::plot_census(reverse_grid()) %>%
+  #     bind_shiny("plot_census")
+  # })
+  # data table
+  output$table_census = DT::renderDataTable(
+    if (!is.null(census())) {census() %>% select(-grid)} else {NULL},
+    server = TRUE,
+    options = list(pageLength = 20, autoWidth = TRUE),
+    class = 'nowrap stripe compact',
+    rownames = FALSE,
+    filter = "top",
+    colnames = c(
+      "ID" = "squirrel_id",
+      "Colours" = "colours",
+      "Tags" = "tags",
+      "Sex" = "sex",
+      "Trap Date" = "trap_date",
+      "Loc X" = "locx",
+      "Loc Y" = "locy",
+      "In census?" = "in_census",
+      "Reflo" = "census_reflo",
+      "Fate" = "census_fate")
+  )
+  # download
+  output$download_data_census <- downloadHandler(
+    filename = function() {
+      paste0("census-progress-",
+             tolower(input$grid_input_census), "-",
+             input$census_input_census, "-",
+             input$year_input_rattle,
+             ".csv")
+    },
+    content = function(file) {
+      data <- census()
+      validate(
+        need(is.data.frame(data) & nrow(data) > 0,
+             "No data to download")
+      )
+      write_csv(data, file)
+    }
+  )
+
+  ##########   Collars   ##########
+
   # data
   collars <- eventReactive(input$submit_collars, {
     if (input$grid_input_collars == "All") {
@@ -234,9 +304,9 @@ shinyServer(function(input, output, session) {
       "Frequency" = "collar",
       "Last Trapped" = "last_trapped")
   )
-  
-  ##########   Data Checking   ########## 
-  
+
+  ##########   Data Checking   ##########
+
   # description of check
   output$description_checks <- renderUI({
     if (input$type_input_checks == "Trapping") {
@@ -294,13 +364,13 @@ shinyServer(function(input, output, session) {
     if ("observer" %in% names(results)) {
       results <- results %>% mutate(observer = factor(observer))
     }
-    
+
   })
   # data table
   output$table_checks = DT::renderDataTable(
     if (!is.null(checks()) && !is.null(input$date_input_checks)) {
       checks() %>% filter(date >= input$date_input_checks[1],
-                          date <= input$date_input_checks[2]) 
+                          date <= input$date_input_checks[2])
     } else {
       NULL
     },
@@ -312,7 +382,7 @@ shinyServer(function(input, output, session) {
   )
   # data table - check descriptions
   descriptions <- reactive({
-    filter(check_descriptions, Category == input$type_input_checks) %>% 
+    filter(check_descriptions, Category == input$type_input_checks) %>%
       select(-Category)
   })
   output$table_checks_descriptions = DT::renderDataTable(
@@ -337,15 +407,15 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       data <- checks()
       validate(
-        need(is.data.frame(data) & nrow(data) > 0, 
+        need(is.data.frame(data) & nrow(data) > 0,
              "No data to download")
       )
       write_csv(data, file)
     }
   )
-  
-  ##########   Colour Keys   ########## 
-  
+
+  ##########   Colour Keys   ##########
+
   # data
   colours <- eventReactive(input$submit_colours, {
       krsp_colours(kp(pool),
@@ -360,7 +430,7 @@ shinyServer(function(input, output, session) {
       "than one colour on a single ear or a mix of wires/pipes/bars) are not ",
       "included in these keys. These cases will be visible in the All tab.")
   })
-  
+
   ## female
   female_colours <- reactive({
     if (!is.data.frame(colours())) {
@@ -368,17 +438,17 @@ shinyServer(function(input, output, session) {
     }
     # filter to desired squirrels
     card <- filter(colours(), sex == "F", !juvenile, standard, !duplicate, valid)
-    
+
     if (nrow(card) == 0) {
       return(NULL)
     }
-    
-    card <- card %>% 
+
+    card <- card %>%
       # combine tags and loc into single cell value
-      mutate(cell_value = sprintf("%s<br><strong>%s</strong>", tags, reflo)) %>% 
+      mutate(cell_value = sprintf("%s<br><strong>%s</strong>", tags, reflo)) %>%
       # convert to factors to ensure correct ordering
       mutate(left = factor(left, levels = c('-', valid_colours)),
-             right = factor(right, levels = c('-', valid_colours))) %>% 
+             right = factor(right, levels = c('-', valid_colours))) %>%
       select(left, right, cell_value)
     # transpose, long to wide
     card <- spread(card, right, cell_value)
@@ -394,33 +464,33 @@ shinyServer(function(input, output, session) {
                     ordering = FALSE,
                     columnDefs = list(list(className = 'dt-center',
                                            targets = 0:(ncol(card) - 1))))
-    ) %>% 
-    formatStyle("L/R", textAlign = "center", fontWeight = "bold") 
+    ) %>%
+    formatStyle("L/R", textAlign = "center", fontWeight = "bold")
   })
   # output
   output$table_female_colours = DT::renderDataTable(
     if (!is.null(female_colours())) female_colours() else NULL,
     server = FALSE)
-  
+
   ## male
   male_colours <- reactive({
     if (!is.data.frame(colours())) {
       return(NULL)
     }
-    
+
     # filter to desired squirrels
     card <- filter(colours(), sex == "M", !juvenile, standard, !duplicate, valid)
-    
+
     if (nrow(card) == 0) {
       return(NULL)
     }
-    
-    card <- card %>% 
+
+    card <- card %>%
       # combine tags and loc into single cell value
-      mutate(cell_value = sprintf("%s<br><strong>%s</strong>", tags, reflo)) %>% 
+      mutate(cell_value = sprintf("%s<br><strong>%s</strong>", tags, reflo)) %>%
       # convert to factors to ensure correct ordering
       mutate(left = factor(left, levels = c('-', paste0(valid_colours, "!"))),
-             right = factor(right, levels = c('-', paste0(valid_colours, "!")))) %>% 
+             right = factor(right, levels = c('-', paste0(valid_colours, "!")))) %>%
       select(left, right, cell_value)
     # transpose, long to wide
     card <- spread(card, right, cell_value)
@@ -436,34 +506,34 @@ shinyServer(function(input, output, session) {
                     ordering = FALSE,
                     columnDefs = list(list(className = 'dt-center',
                                            targets = 0:(ncol(card) - 1))))
-    ) %>% 
-      formatStyle("L/R", textAlign = "center", fontWeight = "bold") 
+    ) %>%
+      formatStyle("L/R", textAlign = "center", fontWeight = "bold")
   })
   # output
   output$table_male_colours = DT::renderDataTable(
     if (!is.null(male_colours())) male_colours() else NULL,
     server = FALSE)
-  
+
     ## juvenile
   juve_colours <- reactive({
     if (!is.data.frame(colours())) {
       return(NULL)
     }
-    
+
     # filter to desired squirrels
     card <- filter(colours(), juvenile, standard, !duplicate, valid)
-    
-    
+
+
     if (nrow(card) == 0) {
       return(NULL)
     }
-    
-    card <- card %>% 
+
+    card <- card %>%
       # combine tags and loc into single cell value
-      mutate(cell_value = sprintf("%s<br><strong>%s</strong>", tags, reflo)) %>% 
+      mutate(cell_value = sprintf("%s<br><strong>%s</strong>", tags, reflo)) %>%
       # convert to factors to ensure correct ordering
       mutate(left = factor(left, levels = c('-', paste0(valid_colours, "*"))),
-             right = factor(right, levels = c('-', paste0(valid_colours, "*")))) %>% 
+             right = factor(right, levels = c('-', paste0(valid_colours, "*")))) %>%
       select(left, right, cell_value)
     # transpose, long to wide
     card <- spread(card, right, cell_value)
@@ -479,14 +549,14 @@ shinyServer(function(input, output, session) {
                     ordering = FALSE,
                     columnDefs = list(list(className = 'dt-center',
                                            targets = 0:(ncol(card) - 1))))
-    ) %>% 
-      formatStyle("L/R", textAlign = "center", fontWeight = "bold") 
+    ) %>%
+      formatStyle("L/R", textAlign = "center", fontWeight = "bold")
   })
   # output
   output$table_juve_colours = DT::renderDataTable(
     if (!is.null(juve_colours())) juve_colours() else NULL,
     server = FALSE)
-  
+
   # all
   output$table_all_colours = DT::renderDataTable(
     if (!is.null(colours())) colours() else NULL,
@@ -511,7 +581,7 @@ shinyServer(function(input, output, session) {
       "Duplicate" = "duplicate",
       "Valid" = "valid")
   )
-  
+
   # download
   output$download_data_colours <- downloadHandler(
     filename = function() {
@@ -523,15 +593,15 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       data <- colours()
       validate(
-        need(is.data.frame(data) & nrow(data) > 0, 
+        need(is.data.frame(data) & nrow(data) > 0,
              "No data to download")
       )
       write_csv(data, file)
     }
   )
-  
-  ##########   Part Date Calculator   ########## 
-  
+
+  ##########   Part Date Calculator   ##########
+
   observeEvent(input$lookup_pdate, {
     # lookup litter weights
     litter_lookup <- tryCatch({
@@ -544,7 +614,7 @@ shinyServer(function(input, output, session) {
       weights <- na.omit(litter_lookup$weight)
       n1_date <- na.omit(litter_lookup$n1_date)[1]
       # get first date lac and last date pregnant
-      lacpreg_date <- krsp:::lastpreg_firstlac(kp(pool), input$sid_pdate, 
+      lacpreg_date <- krsp:::lastpreg_firstlac(kp(pool), input$sid_pdate,
                                                n1_date)
       # populate weights
       for (i in seq_along(weights)) {
@@ -568,7 +638,7 @@ shinyServer(function(input, output, session) {
       }
     }
   })
-  
+
   # display results
   litter_data <- eventReactive(input$submit_pdate, {
     weights <- rep(NA, 8)
@@ -613,9 +683,9 @@ shinyServer(function(input, output, session) {
     }
     format(part_date, "%Y-%m-%d")
   })
-  
-  ##########   Top Squirrelers   ########## 
-  
+
+  ##########   Top Squirrelers   ##########
+
   # description of check
   output$description_top <- renderUI({
     if (input$metric_input_top == "trapping") {
@@ -638,20 +708,20 @@ shinyServer(function(input, output, session) {
     }
     # order properly
     if (input$metric_input_top == "behaviour") {
-      results <- arrange(results, desc(n_behaviours), desc(n_trapped), 
-                         desc(n_collars)) %>% 
+      results <- arrange(results, desc(n_behaviours), desc(n_trapped),
+                         desc(n_collars)) %>%
         mutate(rank = row_number(desc(n_behaviours)))
     } else if (input$metric_input_top == "collars") {
-      results <- arrange(results, desc(n_collars), desc(n_trapped), 
-                         desc(n_behaviours)) %>% 
+      results <- arrange(results, desc(n_collars), desc(n_trapped),
+                         desc(n_behaviours)) %>%
         mutate(rank = row_number(desc(n_collars)))
     } else {
-      results <- arrange(results, desc(n_trapped), desc(n_collars), 
-                         desc(n_behaviours)) %>% 
+      results <- arrange(results, desc(n_trapped), desc(n_collars),
+                         desc(n_behaviours)) %>%
         mutate(rank = row_number(desc(n_trapped)))
     }
     # rank
-    results <- select(results, rank, observer, 
+    results <- select(results, rank, observer,
                       n_trapped, n_collars, n_behaviours)
     # convert to data table
     dt <- datatable(
@@ -665,11 +735,11 @@ shinyServer(function(input, output, session) {
         "Squirreler" = "observer",
         "Squirrels Trapped" = "n_trapped",
         "Collars" = "n_collars",
-        "Behaviour Observations" = "n_behaviours")) %>% 
-      formatStyle("Rank", textAlign = "center", fontWeight = "bold") %>% 
-      formatStyle("Squirreler", textAlign = "left", fontWeight = "bold") %>% 
-      formatStyle("Squirrels Trapped", textAlign = "center") %>% 
-      formatStyle("Collars", textAlign = "center") %>% 
+        "Behaviour Observations" = "n_behaviours")) %>%
+      formatStyle("Rank", textAlign = "center", fontWeight = "bold") %>%
+      formatStyle("Squirreler", textAlign = "left", fontWeight = "bold") %>%
+      formatStyle("Squirrels Trapped", textAlign = "center") %>%
+      formatStyle("Collars", textAlign = "center") %>%
       formatStyle("Behaviour Observations", textAlign = "center")
     dt
   })
