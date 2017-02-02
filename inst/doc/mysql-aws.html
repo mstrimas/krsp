@@ -214,7 +214,7 @@ $(document).ready(function () {
 <div id="r" class="section level2">
 <h2>R</h2>
 <p>MySQL databases can be accessed in R using a variety of approaches: the <code>RMySQL</code> package, the <code>src_mysql</code> function in <code>dplyr</code>, or <code>krsp_connect</code> function in the custom <code>krsp</code> package. In all cases, you need to create a <code>my.cnf</code> connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.</p>
-<p>On Mac OS and Linux the connection file is <code>~/.my.cnf</code> and on Windows it is located at <code>C:/my.cnf</code>. Open this file, or create it if it doesn’t already exist, and enter the following text:</p>
+<p>On Mac OS and Linux the connection file is <code>~/.my.cnf</code> and on Windows it is located at <code>C:/my.cnf</code>. Note that this file must be plain text and have no “.txt” extension. Open this file, or create it if it doesn’t already exist, and enter the following text:</p>
 <pre><code>[krsp-aws]
 user=msm
 password=F60RUsyiG579PeKdCH

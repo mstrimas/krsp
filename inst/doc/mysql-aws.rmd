@@ -111,7 +111,7 @@ After you've entered all the necessary information click *Close*, then click on 
 
 MySQL databases can be accessed in R using a variety of approaches: the `RMySQL` package, the `src_mysql` function in `dplyr`, or `krsp_connect` function in the custom `krsp` package. In all cases, you need to create a `my.cnf` connection file to store the location of the database and your credentials. This avoids having to store sensitive information, such as your password, within your R code.
 
-On Mac OS and Linux the connection file is `~/.my.cnf` and on Windows it is located at `C:/my.cnf`. Open this file, or create it if it doesn't already exist, and enter the following text:
+On Mac OS and Linux the connection file is `~/.my.cnf` and on Windows it is located at `C:/my.cnf`. Note that this file must be plain text and have no ".txt" extension. Open this file, or create it if it doesn't already exist, and enter the following text:
 
 ```
 [krsp-aws]
