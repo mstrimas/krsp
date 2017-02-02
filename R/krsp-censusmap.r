@@ -1,4 +1,4 @@
-#' Display a map of progress towards census
+#' Display a map of middens comparing this and previous census
 #'
 #' This function is to meant to be used to monitor progress towards completion
 #' of the census. It shows all middens from the previous census and whether or
@@ -15,7 +15,8 @@
 #' @param census character; are you completing the may or august census?
 #' @param data logical; whether to just return the data instead of a plot.
 #'
-#' @return An interactive plot comparing censuses.
+#' @return An interactive plot comparing censuses, or a data frame if
+#'   \code{data == TRUE}.
 #' @export
 #' @examples
 #' con <- krsp_connect()
@@ -39,6 +40,7 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
   year <- as.integer(year)
   grid_choice <- grid
   reverse_grid <- (grid_choice == "AG")
+  valid_fates <- c(1, 2, 3, 4, 6, 9)
 
   # census dates
   if (census == "may") {
@@ -51,26 +53,6 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
     stop("Invalid census, must be may or august")
   }
 
-  # get trapping record closest to census to give colours and tags
-  recent_query <- sprintf(
-    "SELECT
-      t.id, t.squirrel_id,
-      t.taglft, t.tagrt,
-      t.color_left, t.color_right,
-      s.sex
-    FROM
-      trapping t
-      INNER JOIN squirrel s
-        ON t.squirrel_id = s.id
-      WHERE
-        s.gr = '%s' AND
-        (t.squirrel_id, t.date) IN (
-        SELECT squirrel_id, MAX(date) as max_date
-        FROM trapping
-        WHERE date <= '%s'
-        GROUP BY squirrel_id);",
-    grid_choice, this_census)
-
   # suppressWarnings to avoid typcasting warnings
   suppressWarnings({
     # get necessary tables from database
@@ -78,101 +60,89 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
       filter_(~ gr == grid_choice,
               ~ !is.na(reflo),
               ~ census_date == this_census | census_date == last_census) %>%
-      select_("reflo", "gr", "census_date", "locx", "locy",
+      select_("reflo", grid = "gr", "census_date", "locx", "locy",
               "squirrel_id", fate = "sq_fate") %>%
       collect()
-    recent <- krsp_sql(con, recent_query)
   })
-  # remove possible duplicates in trapping
-  recent <- recent %>%
-    group_by_("squirrel_id") %>%
-    filter_(~ id == max(id)) %>%
-    ungroup()
-  # process trapping
-  recent <- recent %>%
-    mutate_(squirrel_id = ~ as.integer(squirrel_id),
-            color_left = ~ ifelse(is.na(color_left) | color_left == "",
-                                  "-", color_left),
-            color_right = ~ ifelse(is.na(color_right) | color_right == "",
-                                   "-", color_right),
-            taglft = ~ ifelse(is.na(taglft) | taglft == "", "-", taglft),
-            tagrt = ~ ifelse(is.na(tagrt) | tagrt == "", "-", tagrt),
-            colours = ~ paste(color_left, color_right, sep = "/"),
-            tags = ~ paste(taglft, tagrt, sep = "/"),
-            sex = ~ factor(coalesce(sex, "?"), levels = c("F", "M", "?"))) %>%
-    select_("squirrel_id", "colours", "tags", "sex")
 
   # process census
   census <- census %>%
     mutate_(squirrel_id = ~ as.integer(squirrel_id),
             locx = ~ loc_to_numeric(locx),
-            locy = ~ suppressWarnings(round(as.numeric(locy), 1)),
-            in_census = TRUE)
+            locy = ~ suppressWarnings(round(as.numeric(locy), 1)))
   # split into censuses
-  results <- full_join(
-    filter_(census, ~ census_date == this_census),
-    filter_(census, ~ census_date == last_census),
-    by = "reflo", suffix = c("_this", "_last")) %>%
-    mutate_(grid = ~ coalesce(gr_this, gr_last),
-            locx = ~ if_else(in_census_this, locx_this, locx_last),
-            locy = ~ if_else(in_census_this, locy_this, locy_last)) %>%
-    filter_(~ !is.na(locx), ~ !is.na(locy))
-  names(results) <- stringr::str_replace(names(results), "_this$", "")
-  results$status <- case_when(
-    is.na(results$in_census) & results$in_census_last ~ "not censused",
-    results$in_census & is.na(results$in_census_last) ~ "new midden",
-    results$squirrel_id == results$squirrel_id_last ~ "unchanged",
-    results$squirrel_id != results$squirrel_id_last ~ "switch",
-    TRUE ~ "other"
-  )
-
-  results <- results %>%
+  census_last <- census %>%
+    filter_(~ census_date == last_census) %>%
+    select_(~ -census_date)
+  census_this <- census %>%
+    filter_(~ census_date == this_census) %>%
+    select_("reflo", locx_new = "locx", locy_new = "locy",
+            squirrel_id_new = "squirrel_id", fate_new = "fate")
+  # bring current fate into last census
+  results <- left_join(census_last, census_this, by = "reflo") %>%
+    mutate_(locx = ~ if_else(is.na(locx) & is.na(locy), locx_new, locx),
+            locy = ~ if_else(is.na(locx) & is.na(locy), locy_new, locy)) %>%
+    filter_(~ !is.na(locx), ~ !is.na(locy),
+            ~ fate %in% valid_fates) %>%
     select_("reflo", "grid", "locx", "locy",
-            "squirrel_id", "squirrel_id_last", "fate", "fate_last",
-            "in_census", "in_census_last")
+            "squirrel_id", "squirrel_id_new",
+            "fate", "fate_new") %>%
+    arrange_("locx", "locy")
 
+  # either return data frame or interactive map of census
+  if (data) {
+    return(results)
+  } else {
+    return(plot_census(results, reverse_grid))
+  }
 }
 
 plot_census <- function(census, reverse_grid = FALSE) {
   # no results
-  if (nrow(rattles) == 0) {
+  if (nrow(census) == 0) {
     return("No rattles found.")
   }
-  # create squirrel_id factor variable for colouring
-  rattles <- rattles %>%
-    mutate_(sid = ~ factor(squirrel_id)) %>%
-    mutate_(id = ~ row_number()) %>%
-    # middens present?
-    all_data <- rattles
-  middens <- rattles %>%
-    filter_(~ source == "census")
-  rattles <- rattles %>%
-    filter_(~ source != "census")
+  # create fate factor variable for colouring
+  valid_fates <- 1:12
+  fates <- c(0, valid_fates) %>%
+    as.integer()
+  fates_lbl <- c("tba", as.character(valid_fates))
+  census <- census %>%
+    mutate_(fate = ~ as.integer(fate),
+            fate_factor = ~ factor(coalesce(fate_new, 0L),
+                                   levels = fates,
+                                   labels = fates_lbl),
+            id = ~ row_number(),
+            censused = ~ if_else(!is.na(fate_new), "Yes", "No")) %>%
+    rename_(x = "locx", y = "locy")
   # create interactive plot
   popup <- function(x) {
-    row <- rattles[all_data$id == x$id, ]
+    row <- census[census$id == x$id, ]
     paste(
-      sprintf("<strong>Date:</strong> %s", row$date),
-      sprintf("<strong>Colours:</strong> %s", row$colours),
-      sprintf("<strong>Tags:</strong> %s", row$tags),
-      sprintf("<strong>Last Trapped:</strong> %s", row$trap_date),
+      sprintf("<strong>Reflo:</strong> %s", row$reflo),
+      sprintf("<strong>Previous Owner:</strong> %s", row$squirrel_id),
+      sprintf("<strong>Current Owner:</strong> %s",
+              coalesce(as.character(row$squirrel_id_new), "tbd")),
+      sprintf("<strong>Previous Fate:</strong> %s", row$fate),
+      sprintf("<strong>Current Fate:</strong> %s",
+              coalesce(as.character(row$fate_new), "tbd")),
       sep = "<br />")
   }
   fnt <- c("Helvetica Neue", "sans-serif")
-  x_ticks <- floor(min(all_data$x)):ceiling(max(all_data$x))
-  y_ticks <- floor(min(all_data$y)):ceiling(max(all_data$y))
+  x_ticks <- floor(min(census$x)):ceiling(max(census$x))
+  y_ticks <- floor(min(census$y)):ceiling(max(census$y))
   # letter labels for x-axis
   x_labels <- data_frame(x = x_ticks + ifelse(reverse_grid, 0.2, -0.2),
-                         y = ceiling(max(all_data$y)),
+                         y = ceiling(max(census$y)),
                          label = sapply(x_ticks, function(i) {
                            ifelse(i > 0 & i <= 26, LETTERS[i], i)
                          })
   )
-  g <- ggvis::ggvis(rattles, ~x, ~y) %>%
-    ggvis::layer_points(fill = ~sid, shape = ~sex,
+  g <- ggvis::ggvis(census, ~x, ~y) %>%
+    ggvis::layer_points(fill = ~fate_factor, shape = ~censused,
                         key := ~id, opacity := 0.7) %>%
     # assign shapes to sexes
-    ggvis::scale_nominal("shape", range = c("circle", "square", "diamond")) %>%
+    ggvis::scale_nominal("shape", range = c("circle", "square")) %>%
     # labels for x loc letters
     ggvis::layer_text(~x, ~y, text := ~label,
                       fontSize := 14, fontWeight := "bold",
@@ -203,21 +173,15 @@ plot_census <- function(census, reverse_grid = FALSE) {
                       title = list(fontSize = 16, font = fnt),
                       labels = list(fontSize = 14, font = fnt)
                     )) %>%
-    ggvis::hide_legend("fill") %>%
-    # visualize sex with different symbols
-    ggvis::add_legend("shape", title = "Sex",
+    # fate legend
+    ggvis::add_legend("fill", title = "Fate",
                       properties = ggvis::legend_props(
                         title = list(fontSize = 20, font = fnt),
-                        labels = list(fontSize = 16, font = fnt),
-                        symbols = list(fill = "black", stroke = "black", size = 100)
+                        labels = list(fontSize = 16, font = fnt)
                       )) %>%
+    ggvis::hide_legend("shape") %>%
     # popup tooltips with additional information
     ggvis::add_tooltip(popup) %>%
     ggvis::set_options(height = 650, width = 900)
-
-  # add middens locations if requested
-  g <- ggvis::layer_points(vis = g, data = middens, stroke = ~sid,
-                           fill := NA, shape = ~sex) %>%
-    ggvis::hide_legend("stroke")
   return(g)
 }

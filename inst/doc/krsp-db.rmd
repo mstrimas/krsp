@@ -315,7 +315,7 @@ trapping %>%
 
 ## Case sensitivity
 
-R is case sensistive, MySQL is not. The causes an issue because MySQL allows you to use mixed case when defining variables. For example, a variable can be called `LocX`, but referred to with `locx`, `LocX`, or `LOCX`. `dplyr` isn't so sloppy, if a variable is called `LocX` in the database, it must be referred to as `LocX`.
+R is case sensistive, MySQL is not. The can cause problems because MySQL allows you to use mixed case when defining variables. For example, a variable can be called `LocX`, but referred to with `locx`, `LocX`, or `LOCX`. `dplyr` isn't so sloppy, if a variable is called `LocX` in the database, it must be referred to as `LocX`.
 
 To see this issue in action, note that the `dbaMidden` table uses `locX`, while the `census` table uses `locx`.
 

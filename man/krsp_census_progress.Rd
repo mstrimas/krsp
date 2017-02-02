@@ -2,7 +2,7 @@
 % Please edit documentation in R/krsp-census-progress.r
 \name{krsp_census_progress}
 \alias{krsp_census_progress}
-\title{Display a table/map of progress towards census}
+\title{Display a table of progress towards census}
 \usage{
 krsp_census_progress(con, grid, year, census)
 }
@@ -25,10 +25,10 @@ of the census. It lists all squirrels caught since the last census and notes
 whether then have been entered into the current census.
 }
 \details{
-The user must identify which census they are completing. If it is an August,
-then this function returns all squirrels caught between May 15 and August 15.
-If it's a May census that is being completed, then this function returns all
-squirrels seen up to May 15 of the given year.
+The user must identify which census they are completing. If it is an August
+census, then this function returns all squirrels caught between May 15 and
+August 15. If it's a May census that is being completed, then this function
+returns all squirrels seen up to May 15 of the given year.
 }
 \examples{
 con <- krsp_connect()

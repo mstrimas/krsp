@@ -115,7 +115,7 @@ On Mac OS and Linux the connection file is `~/.my.cnf` and on Windows it is loca
 
 ```
 [krsp-aws]
-username=msm
+user=msm
 password=F60RUsyiG579PeKdCH
 host=krsp.abc123.us-west-2.rds.amazonaws.com
 port=3306

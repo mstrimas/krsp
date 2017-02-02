@@ -11,7 +11,7 @@ shinyServer(function(input, output, session) {
                      middens = input$middens_rattle,
                      data = TRUE)
   })
-  reverse_grid <- eventReactive(input$submit_rattle, {
+  reverse_grid_rattle <- eventReactive(input$submit_rattle, {
     input$grid_input_rattle == "AG"
   })
 
@@ -136,7 +136,7 @@ shinyServer(function(input, output, session) {
   observe({
     if (!is.null(rattles_filtered())) {
       rattles_filtered() %>%
-        krsp:::plot_rattles(reverse_grid()) %>%
+        krsp:::plot_rattles(reverse_grid_rattle()) %>%
         bind_shiny("plot_rattle")
     } else {
       message_plot("No rattles found.") %>%
@@ -194,81 +194,103 @@ shinyServer(function(input, output, session) {
                     year = input$year_input_progress,
                     data = TRUE)
   })
+
   # data table
   output$table_progress = DT::renderDataTable(
     if (!is.null(progress())) krsp:::progress_datatable(progress()) else NULL,
     server = TRUE
   )
 
-  ##########   Census   ##########
-
-  # data
-  census <- eventReactive(input$submit_census, {
-    kp(pool) %>%
-      krsp_census_progress(grid = input$grid_input_census,
-                           year = input$year_input_census,
-                           census = input$census_input_census)
-  })
-  # update description
-  output$description_census <- renderText({
-    year <- input$year_input_census
-    if (input$census_input_census == "may") {
-      month <- "May"
-      start_date <- paste0(year, "-01-01")
-      end_date <- paste0(year, "-05-15")
-    } else {
-      month <- "August"
-      start_date <- paste0(year, "-05-16")
-      end_date <- paste0(year, "-08-15")
-    }
-    paste("Showing all squirrels caught between %s and %s and, for",
-          "those in the %s %s census, their census fate and reflo.") %>%
-      sprintf(start_date, end_date, month, year)
-  })
-  # plot
-  # observe({
-  #   data() %>%
-  #     krsp:::plot_census(reverse_grid()) %>%
-  #     bind_shiny("plot_census")
+  # ##########   Census   ##########
+  #
+  # # data
+  # census <- eventReactive(input$submit_census, {
+  #   kp(pool) %>%
+  #     krsp_census_progress(grid = input$grid_input_census,
+  #                          year = input$year_input_census,
+  #                          census = input$census_input_census)
   # })
-  # data table
-  output$table_census = DT::renderDataTable(
-    if (!is.null(census())) {census() %>% select(-grid)} else {NULL},
-    server = TRUE,
-    options = list(pageLength = 20, autoWidth = TRUE),
-    class = 'nowrap stripe compact',
-    rownames = FALSE,
-    filter = "top",
-    colnames = c(
-      "ID" = "squirrel_id",
-      "Colours" = "colours",
-      "Tags" = "tags",
-      "Sex" = "sex",
-      "Trap Date" = "trap_date",
-      "Loc X" = "locx",
-      "Loc Y" = "locy",
-      "In census?" = "in_census",
-      "Reflo" = "census_reflo",
-      "Fate" = "census_fate")
-  )
-  # download
-  output$download_data_census <- downloadHandler(
-    filename = function() {
-      paste0("census-progress-",
-             tolower(input$grid_input_census), "-",
-             input$census_input_census, "-",
-             input$year_input_rattle,
-             ".csv")
-    },
-    content = function(file) {
-      data <- census()
-      validate(
-        need(is.data.frame(data) & nrow(data) > 0,
-             "No data to download")
-      )
-      write_csv(data, file)
-    }
-  )
+  # census_map <- eventReactive(input$submit_census, {
+  #   kp(pool) %>%
+  #     krsp_censusmap(grid = input$grid_input_census,
+  #                    year = input$year_input_census,
+  #                    census = input$census_input_census,
+  #                    data = TRUE)
+  # })
+  # reverse_grid_census <- eventReactive(input$submit_census, {
+  #   input$grid_input_census == "AG"
+  # })
+  #
+  # # progress table
+  # output$table_census = DT::renderDataTable(
+  #   if (!is.null(census())) {census() %>% select(-grid)} else {NULL},
+  #   server = TRUE,
+  #   options = list(pageLength = 20, autoWidth = TRUE),
+  #   class = 'nowrap stripe compact',
+  #   rownames = FALSE,
+  #   filter = "top",
+  #   colnames = c(
+  #     "ID" = "squirrel_id",
+  #     "Colours" = "colours",
+  #     "Tags" = "tags",
+  #     "Sex" = "sex",
+  #     "Trap Date" = "trap_date",
+  #     "Loc X" = "locx",
+  #     "Loc Y" = "locy",
+  #     "In census?" = "in_census",
+  #     "Reflo" = "census_reflo",
+  #     "Fate" = "census_fate")
+  # )
+  #
+  # # map
+  # observe({
+  #   data <- census_map()
+  #   if (is.data.frame(data) & nrow(data) > 0) {
+  #     data %>%
+  #       krsp:::plot_census(reverse_grid_census()) %>%
+  #       bind_shiny("plot_censusmap")
+  #   } else {
+  #     message_plot("No records found.") %>%
+  #       bind_shiny("plot_censusmap")
+  #   }
+  # })
+  # # map data
+  # output$table_censusmap = DT::renderDataTable(
+  #   if (!is.null(census_map())) {census_map() %>% select(-grid)} else {NULL},
+  #   server = TRUE,
+  #   options = list(pageLength = 20, autoWidth = TRUE),
+  #   class = 'nowrap stripe compact',
+  #   rownames = FALSE,
+  #   filter = "top",
+  #   colnames = c(
+  #     "Reflo" = "reflo",
+  #     "Loc X" = "locx",
+  #     "Loc Y" = "locy",
+  #     "Previous Squirrel" = "squirrel_id",
+  #     "New Squirrel" = "squirrel_id_new",
+  #     "Previous Fate" = "fate",
+  #     "New Fate" = "fate_new"
+  #   )
+  # )
+  #
+  # # download
+  # output$download_data_census <- downloadHandler(
+  #   filename = function() {
+  #     paste0("census-progress-",
+  #            tolower(input$grid_input_census), "-",
+  #            input$census_input_census, "-",
+  #            input$year_input_rattle,
+  #            ".csv")
+  #   },
+  #   content = function(file) {
+  #     data <- census()
+  #     validate(
+  #       need(is.data.frame(data) & nrow(data) > 0,
+  #            "No data to download")
+  #     )
+  #     write_csv(data, file)
+  #   }
+  # )
 
   ##########   Collars   ##########
 
