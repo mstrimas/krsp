@@ -136,3 +136,13 @@ tbl(con, "census") %>%
   select(locx) %>% 
   head
 
+## ------------------------------------------------------------------------
+# only the first 100,000 rows are returned
+tbl(con, "trapping") %>% 
+  collect() %>% 
+  nrow()
+# return all rows
+tbl(con, "trapping") %>% 
+  collect(n = Inf) %>% 
+  nrow()
+

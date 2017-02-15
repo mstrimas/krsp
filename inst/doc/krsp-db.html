@@ -134,6 +134,7 @@ $(document).ready(function () {
 <li><a href="#potential-issues-important">Potential issues (<strong>Important!</strong>)</a><ul>
 <li><a href="#laziness">Laziness</a></li>
 <li><a href="#case-sensitivity">Case sensitivity</a></li>
+<li><a href="#record-limit">Record limit</a></li>
 </ul></li>
 </ul>
 </div>
@@ -595,7 +596,7 @@ trapping %&gt;%
 </div>
 <div id="case-sensitivity" class="section level2">
 <h2>Case sensitivity</h2>
-<p>R is case sensistive, MySQL is not. The can cause problems because MySQL allows you to use mixed case when defining variables. For example, a variable can be called <code>LocX</code>, but referred to with <code>locx</code>, <code>LocX</code>, or <code>LOCX</code>. <code>dplyr</code> isn’t so sloppy, if a variable is called <code>LocX</code> in the database, it must be referred to as <code>LocX</code>.</p>
+<p>R is case sensistive, MySQL is not. The can cause problems because MySQL allows you to use mixed case when defining variables. For example, a variable can be called <code>LocX</code>, but referred to with <code>locx</code>, <code>LocX</code>, or <code>LOCX</code>. <code>dplyr</code> isn’t so sloppy, if a variable is called <code>LocX</code> in the database, it must be referred to as <code>LocX</code>. This also applies to table names, for example, note the mixed case in <code>FLastAll</code>.</p>
 <p>To see this issue in action, note that the <code>dbaMidden</code> table uses <code>locX</code>, while the <code>census</code> table uses <code>locx</code>.</p>
 <pre class="r"><code># fine
 tbl(con, &quot;dbaMidden&quot;) %&gt;% 
@@ -638,6 +639,20 @@ tbl(con, &quot;census&quot;) %&gt;%
 ## 5   4.0
 ## 6   4.0</code></pre>
 <p>To avoid this, just make sure you refer to variables with the correct case. Even better, only use lowercase when defining variables in the database.</p>
+</div>
+<div id="record-limit" class="section level2">
+<h2>Record limit</h2>
+<p>By default, <code>dplyr</code> only pulls a maximum of 100,000 from an SQL query. In most cases, this should be sufficient, howver, if you suspect your query may return more records than this, use <code>n = Inf</code> in <code>collect()</code>. For example, to pull the entire trapping table:</p>
+<pre class="r"><code># only the first 100,000 rows are returned
+tbl(con, &quot;trapping&quot;) %&gt;% 
+  collect() %&gt;% 
+  nrow()</code></pre>
+<pre><code>## [1] 100000</code></pre>
+<pre class="r"><code># return all rows
+tbl(con, &quot;trapping&quot;) %&gt;% 
+  collect(n = Inf) %&gt;% 
+  nrow()</code></pre>
+<pre><code>## [1] 141547</code></pre>
 </div>
 </div>
 
