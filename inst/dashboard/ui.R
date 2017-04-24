@@ -91,7 +91,7 @@ shinyUI(navbarPage(
           column(6, selectInput("census_input_census", NULL,
                                 c(May = "may", August = "august"))),
           column(6, selectInput("year_input_census", NULL,
-                                years[years > 2012]))
+                                years[years >= 2016]))
         ),
         actionButton("submit_census", "Submit"),
         conditionalPanel(condition = "input.submit_census > 0",
