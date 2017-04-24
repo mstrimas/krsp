@@ -40,8 +40,7 @@ years <- kp(pool) %>%
 valid_colours <- c("B", "R", "G", "Y", "O", "W", "P", "Bk", "Gy")
 
 # check query descriptions
-check_descriptions <- read.csv("check-descriptions.csv",
-                               stringsAsFactors = FALSE)
+check_descriptions <- read_csv("check-descriptions.csv")
 
 # progress help
 progress_help <- div(
@@ -87,6 +86,32 @@ progress_help <- div(
     "into the litter table, then there will be a row with Litter Status = ",
     "N2 and Trap Status = P3. To avoid this, the field crew should ",
     "immediately create a new litter record once a squirrel is pregnant.")
+)
+
+# help for the census tool
+census_help <- div(
+  p("This tool is used to track progress towards completing the ",
+    "squirrel census. Two views are provided. The ",
+    strong("Progress"), " tab is a squirrel focused view, which ",
+    "can be used to highlight squirrels that have not yet been",
+    "entered into the census. In contrast, the ", strong("Map"),
+    "tab is a midden focused view, which can be used to highlight ",
+    "middens that haven't yet been asigned an owner in the census."),
+  p("The ", strong("Progress"), " tab displays a list of all ",
+    "squirrels caught leading up to the given census, and indicates ",
+    "if these squirrels have already been entered into the census. ",
+    "For a May census, all squirrels caught between January 1st and ",
+    "May 15th of that year are included. For an August census, all ",
+    "squirrels caught since the previous May 15th are included.",
+    "Note that Loc X and Loc Y refer to the location of the most ",
+    "recent trapping record, while Reflo refers to the census."),
+  p("The ", strong("Map"), " tab displays a map of middens from the ",
+    "previous census, coloured according to their fate in the ",
+    "current census. Middens that haven't yet been entered into the ",
+    "current census are shown as squares. The ", strong("Map Data"),
+    " tab shows this same data in tabular form. Excluded from this ",
+    "view are all squirrels with floater fates (3, 14, and 17) as well as ",
+    "juveniles sharing middens with their mothers (fate 7).")
 )
 
 # ggvis plot for no data

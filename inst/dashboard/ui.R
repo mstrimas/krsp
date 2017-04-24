@@ -79,53 +79,47 @@ shinyUI(navbarPage(
     )
   ),
 
-  # ##########   Census   ##########
-  # tabPanel("Census",
-  #   sidebarLayout(
-  #     sidebarPanel(
-  #       h2("Census"),
-  #       p("Display progress towards completing the census."),
-  #       h5("Which census are you completing?"),
-  #       selectInput("grid_input_census", NULL, grids),
-  #       fluidRow(
-  #         column(6, selectInput("census_input_census", NULL,
-  #                               c(May = "may", August = "august"))),
-  #         column(6, selectInput("year_input_census", NULL,
-  #                               years[years > 2012]))
-  #       ),
-  #       actionButton("submit_census", "Submit"),
-  #       conditionalPanel(condition = "input.submit_census > 0",
-  #                        downloadButton("download_data_census", "Download")
-  #       ),
-  #       width = 3
-  #     ),
-  #
-  #     # main panel
-  #     mainPanel(
-  #       tabsetPanel(
-  #         tabPanel("Progress", br(), DT::dataTableOutput("table_census")),
-  #         tabPanel("Map", ggvisOutput("plot_censusmap")),
-  #         tabPanel("Map Data", br(), DT::dataTableOutput("table_censusmap")),
-  #         tabPanel("Help", br(),
-  #           p("The ", strong("Progress"), " tab displays a list of all ",
-  #             "squirrels caught leading up to the given census, and indicates ",
-  #             "if these squirrels have already been entered into the census. ",
-  #             "For a May census, all squirrels caught between January 1st and ",
-  #             "May 15th of that year are included. For an August census, all ",
-  #             "squirrels caught since the previous May 15th are included.",
-  #             "Note that Loc X and Loc Y refer to the location of the most ",
-  #             "recent trapping record, while Reflo refers to the census."),
-  #           p("The ", strong("Map"), " tab displays a map of middens from the ",
-  #             "previous census, coloured according to their fate in the ",
-  #             "current census. Middens that have yet to be entered into the ",
-  #             "current census are highlighted. The ", strong("Map Data"),
-  #             " tab shows this same data in tabular form."),
-  #           p("The census map shows numeric fates for"),
-  #           DT::dataTableOutput("table_fate_descriptions"))
-  #       )
-  #     )
-  #   )
-  # ),
+  ##########   Census   ##########
+  tabPanel("Census",
+    sidebarLayout(
+      sidebarPanel(
+        h2("Census"),
+        p("Display progress towards completing the census."),
+        h5("Which census are you completing?"),
+        selectInput("grid_input_census", NULL, grids),
+        fluidRow(
+          column(6, selectInput("census_input_census", NULL,
+                                c(May = "may", August = "august"))),
+          column(6, selectInput("year_input_census", NULL,
+                                years[years > 2012]))
+        ),
+        actionButton("submit_census", "Submit"),
+        conditionalPanel(condition = "input.submit_census > 0",
+                         downloadButton("download_data_census", "Download")
+        ),
+        width = 3
+      ),
+
+      # main panel
+      mainPanel(
+        tabsetPanel(
+          tabPanel("Progress", br(), DT::dataTableOutput("table_census")),
+          tabPanel("Map",
+            ggvisOutput("plot_censusmap"),
+            conditionalPanel(condition = "input.submit_census > 0",
+                             p(strong("Note: "), "circles indicate middens ",
+                               "that have been entered into the census, ",
+                               "while squares indicate middens that have not ",
+                               "yet been entered into the current census."))),
+          tabPanel("Map Data", br(), DT::dataTableOutput("table_censusmap")),
+          tabPanel("Help", br(),
+            census_help,
+            h3("Fate descriptions"),
+            DT::dataTableOutput("table_fate_descriptions"))
+        )
+      )
+    )
+  ),
 
   ##########   Collars   ##########
   tabPanel("Collars",

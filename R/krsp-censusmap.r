@@ -40,7 +40,9 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
   year <- as.integer(year)
   grid_choice <- grid
   reverse_grid <- (grid_choice == "AG")
-  valid_fates <- c(1, 2, 3, 4, 6, 9)
+  valid_fates_old <- c(1, 2, 3, 4, 6, 9)
+  # exclude floater fates and juvenile share fates
+  valid_fates <- c(1, 2, 8, 15, 16, 18, 19)
 
   # census dates
   if (census == "may") {
@@ -59,6 +61,7 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
     census <- tbl(con, "census") %>%
       filter_(~ gr == grid_choice,
               ~ !is.na(reflo),
+              ~ sq_fate %in% valid_fates,
               ~ census_date == this_census | census_date == last_census) %>%
       select_("reflo", grid = "gr", "census_date", "locx", "locy",
               "squirrel_id", fate = "sq_fate") %>%
@@ -82,8 +85,7 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
   results <- left_join(census_last, census_this, by = "reflo") %>%
     mutate_(locx = ~ if_else(is.na(locx) & is.na(locy), locx_new, locx),
             locy = ~ if_else(is.na(locx) & is.na(locy), locy_new, locy)) %>%
-    filter_(~ !is.na(locx), ~ !is.na(locy),
-            ~ fate %in% valid_fates) %>%
+    filter_(~ !is.na(locx), ~ !is.na(locy)) %>%
     select_("reflo", "grid", "locx", "locy",
             "squirrel_id", "squirrel_id_new",
             "fate", "fate_new") %>%
@@ -100,13 +102,13 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
 plot_census <- function(census, reverse_grid = FALSE) {
   # no results
   if (nrow(census) == 0) {
-    return("No rattles found.")
+    return("No census records found.")
   }
   # create fate factor variable for colouring
-  valid_fates <- 1:12
+  valid_fates <- c(1, 2, 8, 15, 16, 18, 19)
   fates <- c(0, valid_fates) %>%
     as.integer()
-  fates_lbl <- c("tba", as.character(valid_fates))
+  fates_lbl <- c("tbd", as.character(valid_fates))
   census <- census %>%
     mutate_(fate = ~ as.integer(fate),
             fate_factor = ~ factor(coalesce(fate_new, 0L),
