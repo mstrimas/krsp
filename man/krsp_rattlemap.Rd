@@ -59,4 +59,3 @@ krsp_rattlemap(con, "AG", date_range = c("2014-04-01", "2014-04-10"))
 krsp_rattlemap(con, "JO", 2010, locx_range = c("D", "H"),
   locy_range = c(5, 10))
 }
-

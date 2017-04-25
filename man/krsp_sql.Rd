@@ -22,4 +22,3 @@ accidentally changing the database, only \code{SELECT} queries are permitted.
 con <- krsp_connect()
 krsp_sql(con, "SELECT COUNT(*) AS n_squirrels FROM squirrel")
 }
-

@@ -2,13 +2,13 @@
 % Please edit documentation in R/check-nest.r
 \name{check_nest}
 \alias{check_nest}
-\alias{check_nest_dna}
-\alias{check_nest_grid}
 \alias{check_nest_loc}
 \alias{check_nest_n1loc}
 \alias{check_nest_n2loc}
-\alias{check_nest_notch}
 \alias{check_nest_weight}
+\alias{check_nest_dna}
+\alias{check_nest_notch}
+\alias{check_nest_grid}
 \title{Check records in litter and juvenile tables}
 \usage{
 check_nest(con, grid, year)
@@ -71,6 +71,7 @@ The following checks have been implemented:
     the litter is set to the wrong grid.
 }
 }
+
 \examples{
 con <- krsp_connect()
 # run individual checks
@@ -85,4 +86,3 @@ check_nest_grid(con, year = 2006)
 check_nest(con, year = 2012) \%>\%
   count(check)
 }
-

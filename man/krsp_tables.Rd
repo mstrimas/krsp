@@ -19,4 +19,3 @@ List tables in the KRSP database
 con <- krsp_connect()
 krsp_tables(con)
 }
-

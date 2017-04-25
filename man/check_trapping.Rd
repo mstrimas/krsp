@@ -2,14 +2,14 @@
 % Please edit documentation in R/check-trapping.r
 \name{check_trapping}
 \alias{check_trapping}
-\alias{check_trapping_collwt}
-\alias{check_trapping_colours}
-\alias{check_trapping_dna}
-\alias{check_trapping_fate}
 \alias{check_trapping_loc}
-\alias{check_trapping_newdna}
+\alias{check_trapping_colours}
 \alias{check_trapping_tags}
 \alias{check_trapping_weight}
+\alias{check_trapping_collwt}
+\alias{check_trapping_dna}
+\alias{check_trapping_newdna}
+\alias{check_trapping_fate}
 \title{Check records in trapping table}
 \usage{
 check_trapping(con, grid, year, observer)
@@ -86,6 +86,7 @@ The following checks have been implemented:
     the observer forgot to enter the "recap" fate.
 }
 }
+
 \examples{
 con <- krsp_connect()
 # run individual checks
@@ -102,4 +103,3 @@ check_trapping_fate(con, year = 2015)
 check_trapping(con, year = 2014) \%>\%
   count(check)
 }
-

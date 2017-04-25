@@ -76,6 +76,26 @@ grid_list <- function(con) {
   sort(grids)
 }
 
+active_grids <- function(con) {
+  y <- max(year_list(con))
+  grids <- NULL
+  if (!missing(con)) {
+    sql <- "
+    SELECT gr, COUNT(*) AS n
+    FROM trapping
+    WHERE gr IS NOT NULL AND YEAR(date) = %i
+    GROUP BY gr
+    HAVING n > 5;" %>%
+      sprintf(y)
+    grids <- tryCatch(krsp_sql(con, sql), error = function(e) NULL)
+    grids <- grids$gr
+  }
+  if (is.null(grids)) {
+    grids <- grid_list(con)
+  }
+  return(grids)
+}
+
 # determine the next trap date based on status and last trap date
 next_trap <- function(status, trap_date) {
   status <- as.character(status)

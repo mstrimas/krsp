@@ -27,4 +27,3 @@ year should be caught first this year.
 con <- krsp_connect()
 krsp_hitlist(con, 2016)
 }
-

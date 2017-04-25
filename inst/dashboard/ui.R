@@ -86,7 +86,7 @@ shinyUI(navbarPage(
         h2("Census"),
         p("Display progress towards completing the census."),
         h5("Which census are you completing?"),
-        selectInput("grid_input_census", NULL, grids),
+        selectInput("grid_input_census", NULL, active_grids),
         fluidRow(
           column(6, selectInput("census_input_census", NULL,
                                 c(May = "may", August = "august"))),

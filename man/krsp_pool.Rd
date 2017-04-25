@@ -28,4 +28,3 @@ pool <- pool::dbPool(
 )
 krsp_pool(pool)
 }
-

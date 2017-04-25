@@ -20,9 +20,9 @@
 #' @export
 #' @examples
 #' con <- krsp_connect()
-#' krsp_censusmap(con, "JO", 2014, "may", data = TRUE) %>%
+#' krsp_censusmap(con, "JO", 2016, "may", data = TRUE) %>%
 #'   head()
-#' krsp_censusmap(con, "KL", 2015, "august")
+#' krsp_censusmap(con, "KL", 2016, "august")
 krsp_censusmap <- function(con, grid, year, census, data) {
   UseMethod("krsp_censusmap")
 }
@@ -32,7 +32,7 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
                                 data = FALSE) {
   # assertions on arguments
   assert_that(inherits(con, "src_mysql"),
-              valid_year(year, single = TRUE), year > 2012,
+              valid_year(year, single = TRUE), year > 2015,
               valid_grid(grid, single = TRUE),
               assertthat::is.flag(data))
   census <- match.arg(census)
@@ -47,9 +47,9 @@ krsp_censusmap.krsp <- function(con, grid, year, census = c("august", "may"),
   # census dates
   if (census == "may") {
     this_census <- paste0(year, "-05-15")
-    last_census <- paste0(year - 1, "-08-15")
+    last_census <- find_aug_census(con, grid_choice, year - 1L)
   } else if (census == "august") {
-    this_census <- paste0(year, "-08-15")
+    this_census <- find_aug_census(con, grid_choice, year)
     last_census <- paste0(year, "-05-15")
   } else {
     stop("Invalid census, must be may or august")
@@ -186,4 +186,25 @@ plot_census <- function(census, reverse_grid = FALSE) {
     ggvis::add_tooltip(popup) %>%
     ggvis::set_options(height = 650, width = 900)
   return(g)
+}
+
+find_aug_census <- function(con, grid, year) {
+  dates <- paste0(year, c("-08-15", "-09-15"))
+  # suppressWarnings to avoid typcasting warnings
+  suppressWarnings({
+    census <- tbl(con, "census") %>%
+      filter_(~ gr == grid,
+              ~ census_date %in% dates) %>%
+      group_by_("census_date") %>%
+      summarise(n = n()) %>%
+      collect()
+  })
+  d <- census %>%
+    top_n(1, n) %>%
+    {.$census_date}
+  if (length(d) == 1) {
+    d
+  } else {
+    paste0(year, "-08-15")
+  }
 }

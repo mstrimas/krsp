@@ -35,4 +35,3 @@ con <- krsp_connect()
 krsp_census_progress(con, "JO", 2014, "may") \%>\%
   head()
 }
-

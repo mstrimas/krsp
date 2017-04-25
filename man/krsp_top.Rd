@@ -25,4 +25,3 @@ krsp_top(con, year = 2014) \%>\%
 krsp_top(con) \%>\%
   head()
 }
-

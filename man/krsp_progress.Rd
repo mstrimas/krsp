@@ -41,4 +41,3 @@ krsp_progress(con, "JO", 2015, data = TRUE) \%>\%
   head()
 krsp_progress(con, "KL", 2011)
 }
-

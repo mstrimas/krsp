@@ -12,4 +12,3 @@ ensure consistency. Many of the functions are wrappers around \code{dplyr} or
 \code{RMySQL} functions. The vignettes demonstrates the use of this package:
 \code{browseVignettes(package = "krsp")}
 }
-

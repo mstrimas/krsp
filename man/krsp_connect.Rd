@@ -38,4 +38,3 @@ the vignette for this package for further details.
 con <- krsp_connect()
 krsp_tables(con)
 }
-

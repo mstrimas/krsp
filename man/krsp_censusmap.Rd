@@ -34,8 +34,7 @@ compared to the previous year's August census.
 }
 \examples{
 con <- krsp_connect()
-krsp_censusmap(con, "JO", 2014, "may", data = TRUE) \%>\%
+krsp_censusmap(con, "JO", 2016, "may", data = TRUE) \%>\%
   head()
-krsp_censusmap(con, "KL", 2015, "august")
+krsp_censusmap(con, "KL", 2016, "august")
 }
-

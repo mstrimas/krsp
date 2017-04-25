@@ -25,4 +25,3 @@ breed in a given year.
 con <- krsp_connect()
 krsp_needs_br(con, 2015)
 }
-

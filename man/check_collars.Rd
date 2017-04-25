@@ -39,8 +39,8 @@ The following checks have been implemented:
     collar removal (\code{radio = 4}).
 }
 }
+
 \examples{
 con <- krsp_connect()
 check_collars(con, grid = "KL", year = 2014)
 }
-

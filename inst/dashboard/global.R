@@ -32,6 +32,9 @@ kp <- krsp_pool
 grids <- kp(pool) %>%
   krsp:::grid_list() %>%
   sort()
+active_grids <- kp(pool) %>%
+  krsp:::active_grids() %>%
+  sort()
 years <- kp(pool) %>%
   krsp:::year_list() %>%
   sort(decreasing = TRUE)

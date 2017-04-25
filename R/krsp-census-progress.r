@@ -44,7 +44,7 @@ krsp_census_progress.krsp <- function(con, grid, year,
     end_date <- paste0(year, "-05-15")
   } else if (census == "august") {
     start_date <- paste0(year, "-05-16")
-    end_date <- paste0(year, "-08-15")
+    end_date <- find_aug_census(con, grid_choice, year)
   } else {
     stop("Invalid census, must be may or august")
   }

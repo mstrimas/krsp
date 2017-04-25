@@ -49,6 +49,7 @@ The following checks have been implemented:
     nest locs, which may be night locs.
 }
 }
+
 \examples{
 con <- krsp_connect()
 # run individual checks
@@ -58,4 +59,3 @@ check_behaviour_mode(con, year = 2010:2012)
 # or perform them all at once
 check_behaviour(con, grid = "JO", year = 2012)
 }
-
