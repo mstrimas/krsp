@@ -1,4 +1,4 @@
-shinyUI(navbarPage(
+shinyUI(navbarPage(theme = "style.css",
 
   # title
   "Squirrel Dashboard",
@@ -107,10 +107,9 @@ shinyUI(navbarPage(
           tabPanel("Map",
             ggvisOutput("plot_censusmap"),
             conditionalPanel(condition = "input.submit_census > 0",
-                             p(strong("Note: "), "circles indicate middens ",
-                               "that have been entered into the census, ",
-                               "while squares indicate middens that have not ",
-                               "yet been entered into the current census."))),
+                             align = "center",
+                             img(src = 'fate-legend.svg', width = 600,
+                                 align = "center"))),
           tabPanel("Map Data", br(), DT::dataTableOutput("table_censusmap")),
           tabPanel("Help", br(),
             census_help,

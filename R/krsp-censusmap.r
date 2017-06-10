@@ -106,16 +106,19 @@ plot_census <- function(census, reverse_grid = FALSE) {
   }
   # create fate factor variable for colouring
   valid_fates <- c(1, 2, 8, 15, 16, 18, 19)
-  fates <- c(0, valid_fates) %>%
+  fates <- c(valid_fates, 0) %>%
     as.integer()
-  fates_lbl <- c("tbd", as.character(valid_fates))
+  fate_pal <- c("#ff7f0e", "#1f77b4", "#2ca02c", "#9467bd", "#d62728",
+                "#e377c2", "#bcbd22", NA)
+  fates_lbl <- c(as.character(valid_fates), "tbd")
   census <- census %>%
     mutate_(fate = ~ as.integer(fate),
             fate_factor = ~ factor(coalesce(fate_new, 0L),
                                    levels = fates,
                                    labels = fates_lbl),
             id = ~ row_number(),
-            censused = ~ if_else(!is.na(fate_new), "Yes", "No")) %>%
+            censused = ~ if_else(!is.na(fate_new), "Yes", "No"),
+            censused = ~ factor(censused, levels = c("Yes", "No"))) %>%
     rename_(x = "locx", y = "locy")
   # create interactive plot
   popup <- function(x) {
@@ -142,9 +145,16 @@ plot_census <- function(census, reverse_grid = FALSE) {
   )
   g <- ggvis::ggvis(census, ~x, ~y) %>%
     ggvis::layer_points(fill = ~fate_factor, shape = ~censused,
-                        key := ~id, opacity := 0.7) %>%
-    # assign shapes to sexes
-    ggvis::scale_nominal("shape", range = c("circle", "square")) %>%
+                        stroke = ~censused, strokeWidth := 3,
+                        size := 100, key := ~id, opacity := 0.7) %>%
+    # censused = colored, not = empty
+    ggvis::scale_nominal("fill", domain = fates_lbl, range = fate_pal) %>%
+    # censused = circle, not = square
+    ggvis::scale_nominal("shape", domain = c("Yes", "No"),
+                         range = c("circle", "square")) %>%
+    # give outline to un-censused
+    ggvis::scale_nominal("stroke", domain = c("No", "Yes"),
+                         range = c("black", NA)) %>%
     # labels for x loc letters
     ggvis::layer_text(~x, ~y, text := ~label,
                       fontSize := 14, fontWeight := "bold",
@@ -176,15 +186,17 @@ plot_census <- function(census, reverse_grid = FALSE) {
                       labels = list(fontSize = 14, font = fnt)
                     )) %>%
     # fate legend
-    ggvis::add_legend("fill", title = "Fate",
-                      properties = ggvis::legend_props(
-                        title = list(fontSize = 20, font = fnt),
-                        labels = list(fontSize = 16, font = fnt)
-                      )) %>%
+    # ggvis::add_legend("fill", title = "Fate",
+    #                   properties = ggvis::legend_props(
+    #                     title = list(fontSize = 20, font = fnt),
+    #                     labels = list(fontSize = 16, font = fnt)
+    #                   )) %>%
+    ggvis::hide_legend("fill") %>%
     ggvis::hide_legend("shape") %>%
+    ggvis::hide_legend("stroke") %>%
     # popup tooltips with additional information
     ggvis::add_tooltip(popup) %>%
-    ggvis::set_options(height = 650, width = 900)
+    ggvis::set_options(height = 650, width = 900, duration = 0)
   return(g)
 }
 

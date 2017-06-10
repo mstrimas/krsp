@@ -147,7 +147,7 @@ shinyServer(function(input, output, session) {
   })
 
   # data table
-  output$table_rattle = DT::renderDataTable(
+  output$table_rattle <- DT::renderDataTable(
     if (!is.null(rattles_filtered())) {
       rattles_filtered() %>% select(-id, -grid) %>% mutate(source = factor(source))
     } else {NULL},
